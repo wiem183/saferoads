@@ -41,49 +41,47 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBIXJEKe1ebAgozjWeYydS2UIW1OIwpWTo',
-    appId: '1:826892544415:web:1539570d2d1f7957dcb5aa',
-    messagingSenderId: '826892544415',
-    projectId: 'coapp-6c703',
-    authDomain: 'coapp-6c703.firebaseapp.com',
-    storageBucket: 'coapp-6c703.firebasestorage.app',
-    measurementId: 'G-P57E04CWQW',
+    apiKey: 'AIzaSyDU6sHp6avq01iHZwdiKC4Cw32ruAIx0lI',
+    appId: '1:645534682403:web:3578ae91c601cf8f271096',
+    messagingSenderId: '645534682403',
+    projectId: 'wiem-app',
+    authDomain: 'wiem-app.firebaseapp.com',
+    storageBucket: 'wiem-app.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyABgYrx0eGaO3jknQDPxvxr-UsNbiC_Pmg',
-    appId: '1:826892544415:android:3848a8acd5387dfbdcb5aa',
-    messagingSenderId: '826892544415',
-    projectId: 'coapp-6c703',
-    storageBucket: 'coapp-6c703.firebasestorage.app',
+    apiKey: 'AIzaSyDvHIGTpxIutGc1emfYwjJOQqjoV3dDKVQ',
+    appId: '1:645534682403:android:aec898f6b352c5c8271096',
+    messagingSenderId: '645534682403',
+    projectId: 'wiem-app',
+    storageBucket: 'wiem-app.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDvH1ZZETupXkCmZ7hUf37SZqgTuovtzn8',
-    appId: '1:826892544415:ios:4da8e41b2c4ed584dcb5aa',
-    messagingSenderId: '826892544415',
-    projectId: 'coapp-6c703',
-    storageBucket: 'coapp-6c703.firebasestorage.app',
+    apiKey: 'AIzaSyDaWb8jODNyi0lo9JHyfw19r0gYHo0q1xs',
+    appId: '1:645534682403:ios:71d7ade397a8784b271096',
+    messagingSenderId: '645534682403',
+    projectId: 'wiem-app',
+    storageBucket: 'wiem-app.firebasestorage.app',
     iosBundleId: 'com.example.covoiturageApp',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyDvH1ZZETupXkCmZ7hUf37SZqgTuovtzn8',
-    appId: '1:826892544415:ios:4da8e41b2c4ed584dcb5aa',
-    messagingSenderId: '826892544415',
-    projectId: 'coapp-6c703',
-    storageBucket: 'coapp-6c703.firebasestorage.app',
+    apiKey: 'AIzaSyDaWb8jODNyi0lo9JHyfw19r0gYHo0q1xs',
+    appId: '1:645534682403:ios:71d7ade397a8784b271096',
+    messagingSenderId: '645534682403',
+    projectId: 'wiem-app',
+    storageBucket: 'wiem-app.firebasestorage.app',
     iosBundleId: 'com.example.covoiturageApp',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyBIXJEKe1ebAgozjWeYydS2UIW1OIwpWTo',
-    appId: '1:826892544415:web:2869e2980e008baddcb5aa',
-    messagingSenderId: '826892544415',
-    projectId: 'coapp-6c703',
-    authDomain: 'coapp-6c703.firebaseapp.com',
-    storageBucket: 'coapp-6c703.firebasestorage.app',
-    measurementId: 'G-PNQ5ZVTNZ7',
+    apiKey: 'AIzaSyDU6sHp6avq01iHZwdiKC4Cw32ruAIx0lI',
+    appId: '1:645534682403:web:94c333623b3ca9db271096',
+    messagingSenderId: '645534682403',
+    projectId: 'wiem-app',
+    authDomain: 'wiem-app.firebaseapp.com',
+    storageBucket: 'wiem-app.firebasestorage.app',
   );
 
 }
