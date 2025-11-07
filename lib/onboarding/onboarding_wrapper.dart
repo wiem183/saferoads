@@ -1,9 +1,9 @@
-import 'package:covoiturage_app/screens/choice_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_page.dart';
+import '../screens/login_screen.dart';
 
 class OnboardingWrapper extends StatefulWidget {
-  const OnboardingWrapper({Key? key}) : super(key: key);
+  const OnboardingWrapper({super.key});
 
   @override
   State<OnboardingWrapper> createState() => _OnboardingWrapperState();
@@ -21,9 +21,9 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
 
   void _next() {
     if (_current == 1) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) =>  HomeShell()),
-      );
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
     } else {
       _controller.nextPage(
         duration: const Duration(milliseconds: 300),

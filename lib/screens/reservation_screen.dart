@@ -146,7 +146,7 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  value: payment,
+                  initialValue: payment,
                   decoration: InputDecoration(
                     labelText: 'Méthode de paiement',
                     border: OutlineInputBorder(borderRadius: Styles.defaultBorderRadius),
