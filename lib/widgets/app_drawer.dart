@@ -4,10 +4,20 @@ import '../controllers/auth_controller.dart';
 import '../styles/styles.dart';
 import '../screens/login_screen.dart';
 import '../screens/help_support_screen.dart';
-import '../screens/profile_screen.dart';
+import '../screens/search_screen.dart';
+import '../screens/history_screen.dart';
+import '../screens/my_rides_screen.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final Function(int)? onPageChanged;
+
+  const AppDrawer({super.key, this.onPageChanged});
+
+  void _navigateToPage(BuildContext context, int pageIndex) {
+    if (onPageChanged != null) {
+      onPageChanged!(pageIndex);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -102,15 +112,31 @@ class AppDrawer extends StatelessWidget {
                 children: [
                   _buildDrawerItem(
                     context,
+                    icon: Icons.add_circle_outline,
+                    title: 'Publier un trajet',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToPage(context, 0);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
                     icon: Icons.person_outline,
                     title: 'Mon Profil',
                     onTap: () {
                       Navigator.pop(context);
+                      _navigateToPage(context, 1);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.search,
+                    title: 'Rechercher un trajet',
+                    onTap: () {
+                      Navigator.pop(context);
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => const ProfileScreen(),
-                        ),
+                        MaterialPageRoute(builder: (_) => const SearchScreen()),
                       );
                     },
                   ),
@@ -120,7 +146,12 @@ class AppDrawer extends StatelessWidget {
                     title: 'Historique',
                     onTap: () {
                       Navigator.pop(context);
-                      // Navigate to history tab
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const HistoryScreen(),
+                        ),
+                      );
                     },
                   ),
                   _buildDrawerItem(
@@ -129,7 +160,12 @@ class AppDrawer extends StatelessWidget {
                     title: 'Mes Trajets',
                     onTap: () {
                       Navigator.pop(context);
-                      // Navigate to my rides tab
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const MyRidesScreen(),
+                        ),
+                      );
                     },
                   ),
                   _buildDrawerItem(

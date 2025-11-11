@@ -3,9 +3,11 @@ import 'package:flutter/foundation.dart';
 import '../models/user.dart' as models;
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
+import '../services/google_auth_service.dart';
 
 class AuthController with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final GoogleAuthService _googleAuthService = GoogleAuthService();
   models.User? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
@@ -98,6 +100,56 @@ class AuthController with ChangeNotifier {
     }
   }
 
+  // Sign in with Google
+  Future<bool> signInWithGoogle() async {
+    try {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      final userCredential = await _googleAuthService.signInWithGoogle();
+
+      if (userCredential == null) {
+        _isLoading = false;
+        _errorMessage = 'Connexion annulée';
+        notifyListeners();
+        return false;
+      }
+
+      // Créer ou récupérer l'utilisateur dans Firestore
+      final firebaseUser = userCredential.user!;
+
+      // Vérifier si l'utilisateur existe déjà dans Firestore
+      _currentUser = await _authService.getUserData(firebaseUser.uid);
+
+      if (_currentUser == null) {
+        // Créer un nouveau profil utilisateur
+        final newUser = models.User(
+          id: firebaseUser.uid,
+          email: firebaseUser.email ?? '',
+          name: firebaseUser.displayName ?? 'Utilisateur Google',
+          phone: '', // À compléter plus tard si nécessaire
+          createdAt: DateTime.now(),
+        );
+
+        await _authService.createUserInFirestore(newUser);
+        _currentUser = newUser;
+      }
+
+      await StorageService.setString('userId', _currentUser!.id);
+      await StorageService.setString('myPhone', _currentUser!.phone);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = 'Erreur lors de la connexion Google: ${e.toString()}';
+      notifyListeners();
+      return false;
+    }
+  }
+
   // Sign out
   Future<void> signOut() async {
     try {
@@ -149,5 +201,55 @@ class AuthController with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  // Deactivate account
+  Future<bool> deactivateAccount() async {
+    try {
+      if (_currentUser == null) return false;
+
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      await _authService.deactivateAccount(_currentUser!.id);
+      _currentUser = null;
+      await StorageService.setString('userId', '');
+      await StorageService.setString('myPhone', '');
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Delete account permanently
+  Future<bool> deleteAccount() async {
+    try {
+      if (_currentUser == null) return false;
+
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+
+      await _authService.deleteAccount(_currentUser!.id);
+      _currentUser = null;
+      await StorageService.setString('userId', '');
+      await StorageService.setString('myPhone', '');
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _isLoading = false;
+      _errorMessage = e.toString();
+      notifyListeners();
+      return false;
+    }
   }
 }

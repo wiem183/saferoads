@@ -12,7 +12,20 @@
           "package_name": "com.example.covoiturage_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "645534682403-02aea2erg8ltu6snl493jvbsuql7th4h.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.covoiturage_app",
+            "certificate_hash": "ae467218e3d87424619e7c26882f4ff96355771e"
+          }
+        },
+        {
+          "client_id": "645534682403-jmtd8lat859hk7rp9igsin4v7vk92pff.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDvHIGTpxIutGc1emfYwjJOQqjoV3dDKVQ"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "645534682403-jmtd8lat859hk7rp9igsin4v7vk92pff.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "645534682403-1sfp8vsg40avbhabi5ps3787tdr5tipl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.saferoadApp"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +56,12 @@
           "package_name": "com.example.saferoad_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "645534682403-jmtd8lat859hk7rp9igsin4v7vk92pff.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDvHIGTpxIutGc1emfYwjJOQqjoV3dDKVQ"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "645534682403-jmtd8lat859hk7rp9igsin4v7vk92pff.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "645534682403-1sfp8vsg40avbhabi5ps3787tdr5tipl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.saferoadApp"
+              }
+            }
+          ]
         }
       }
     }

@@ -103,6 +103,15 @@ class AuthService {
     }
   }
 
+  // Create user in Firestore (pour Google Sign-In)
+  Future<void> createUserInFirestore(models.User user) async {
+    try {
+      await _db.collection('users').doc(user.id).set(user.toJson());
+    } catch (e) {
+      throw Exception('Erreur lors de la création de l\'utilisateur: $e');
+    }
+  }
+
   // Update user data
   Future<void> updateUserData(models.User user) async {
     await _db.collection('users').doc(user.id).update(user.toJson());
@@ -114,6 +123,49 @@ class AuthService {
       await _firebaseAuth.sendPasswordResetEmail(email: email);
     } on auth.FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    }
+  }
+
+  // Deactivate account (soft delete)
+  Future<void> deactivateAccount(String userId) async {
+    try {
+      await _db.collection('users').doc(userId).update({'isActive': false});
+      // Sign out the user after deactivation
+      await signOut();
+    } catch (e) {
+      throw Exception('Erreur lors de la désactivation du compte: $e');
+    }
+  }
+
+  // Reactivate account
+  Future<void> reactivateAccount(String userId) async {
+    try {
+      await _db.collection('users').doc(userId).update({'isActive': true});
+    } catch (e) {
+      throw Exception('Erreur lors de la réactivation du compte: $e');
+    }
+  }
+
+  // Delete account permanently
+  Future<void> deleteAccount(String userId) async {
+    try {
+      // Delete user data from Firestore
+      await _db.collection('users').doc(userId).delete();
+
+      // Delete user from Firebase Auth
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.delete();
+      }
+    } on auth.FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        throw Exception(
+          'Pour des raisons de sécurité, veuillez vous reconnecter avant de supprimer votre compte.',
+        );
+      }
+      throw _handleAuthException(e);
+    } catch (e) {
+      throw Exception('Erreur lors de la suppression du compte: $e');
     }
   }
 
