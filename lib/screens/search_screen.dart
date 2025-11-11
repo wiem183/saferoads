@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'announcement_list_screen.dart'; 
+import 'announcement_list_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -43,19 +43,26 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('où vas-tu?',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            const Text(
+              'où vas-tu?',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 24),
             _inputField('Origine', _originCtrl, CupertinoIcons.location),
             const SizedBox(height: 16),
-            _inputField('Destination', _destinationCtrl, CupertinoIcons.location_fill),
+            _inputField(
+              'Destination',
+              _destinationCtrl,
+              CupertinoIcons.location_fill,
+            ),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(CupertinoIcons.calendar),
               title: const Text('Quand?'),
               subtitle: Text(
-                  '${_departureDateTime.day}/${_departureDateTime.month}/${_departureDateTime.year}  ${_departureDateTime.hour}:${_departureDateTime.minute.toString().padLeft(2, '0')}'),
+                '${_departureDateTime.day}/${_departureDateTime.month}/${_departureDateTime.year}  ${_departureDateTime.hour}:${_departureDateTime.minute.toString().padLeft(2, '0')}',
+              ),
               onTap: _pickDateTime,
             ),
             const SizedBox(height: 16),
@@ -68,7 +75,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 DropdownButton<int>(
                   value: _seats,
                   items: List.generate(8, (i) => i + 1)
-                      .map((e) => DropdownMenuItem(value: e, child: Text(e.toString())))
+                      .map(
+                        (e) => DropdownMenuItem(
+                          value: e,
+                          child: Text(e.toString()),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) => setState(() => _seats = v!),
                 ),
@@ -77,18 +89,17 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => AnnouncementListScreen(
-                            isPassenger: true,
-                            origin: _originCtrl.text.trim(),
-                            destination: _destinationCtrl.text.trim(),
-                            departureDateTime: _departureDateTime,
-                            seats: _seats,
-                            from: _originCtrl.text.trim(),
-                            to: _destinationCtrl.text.trim(),
-                            when: _departureDateTime,
-                          ))),
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnnouncementListScreen(
+                    isPassenger: true,
+                    origin: _originCtrl.text.trim(),
+                    destination: _destinationCtrl.text.trim(),
+                    departureDateTime: _departureDateTime,
+                    seats: _seats,
+                  ),
+                ),
+              ),
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 16),
                 child: Text('Rechercher', style: TextStyle(fontSize: 18)),

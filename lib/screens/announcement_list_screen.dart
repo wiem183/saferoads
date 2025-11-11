@@ -21,7 +21,7 @@ class AnnouncementListScreen extends StatelessWidget {
     required this.origin,
     required this.destination,
     required this.departureDateTime,
-    required this.seats, required String from, required String to, required DateTime when,
+    required this.seats,
   });
 
   @override
@@ -79,22 +79,41 @@ class AnnouncementListScreen extends StatelessWidget {
             ],
           ),
           StreamBuilder<List<Announcement>>(
-            stream: controller.announcementsStream, 
+            stream: controller.announcementsStream,
             builder: (context, snap) {
               if (snap.hasError) {
-                return SliverToBoxAdapter(child: Center(child: Text('Erreur: ${snap.error}')));
+                return SliverToBoxAdapter(
+                  child: Center(child: Text('Erreur: ${snap.error}')),
+                );
               }
               if (!snap.hasData) {
-                return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+                return const SliverToBoxAdapter(
+                  child: Center(child: CircularProgressIndicator()),
+                );
               }
 
               List<Announcement> list = snap.data!;
 
+              // CORRECTION : Gestion des valeurs nulles
               if (origin.isNotEmpty) {
-                list = list.where((a) => a.origin.toLowerCase().contains(origin.toLowerCase())).toList();
+                list = list
+                    .where(
+                      (a) =>
+                          a.origin != null &&
+                          a.origin.toLowerCase().contains(origin.toLowerCase()),
+                    )
+                    .toList();
               }
               if (destination.isNotEmpty) {
-                list = list.where((a) => a.destination.toLowerCase().contains(destination.toLowerCase())).toList();
+                list = list
+                    .where(
+                      (a) =>
+                          a.destination != null &&
+                          a.destination.toLowerCase().contains(
+                            destination.toLowerCase(),
+                          ),
+                    )
+                    .toList();
               }
               list = list.where((a) => a.availableSeats >= seats).toList();
 
@@ -118,27 +137,27 @@ class AnnouncementListScreen extends StatelessWidget {
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final ann = list[index];
-                    return InkWell(
-                      onTap: () => Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder: (_, __, ___) => isPassenger
-                              ? AnnouncementDetailsScreen(announcement: ann)
-                              : DriverEditScreen(announcement: ann),
-                          transitionsBuilder: (_, animation, __, child) =>
-                              FadeTransition(opacity: animation, child: child),
-                        ),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final ann = list[index];
+                  return InkWell(
+                    onTap: () => Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => isPassenger
+                            ? AnnouncementDetailsScreen(announcement: ann)
+                            : DriverEditScreen(announcement: ann),
+                        transitionsBuilder: (_, animation, __, child) =>
+                            FadeTransition(opacity: animation, child: child),
                       ),
-                      splashColor: Styles.defaultBlueColor.withOpacity(0.2),
-                      borderRadius: Styles.defaultBorderRadius,
-                      child: Hero(tag: ann.id, child: AnnouncementCard(announcement: ann)),
-                    );
-                  },
-                  childCount: list.length,
-                ),
+                    ),
+                    splashColor: Styles.defaultBlueColor.withOpacity(0.2),
+                    borderRadius: Styles.defaultBorderRadius,
+                    child: Hero(
+                      tag: ann.id,
+                      child: AnnouncementCard(announcement: ann),
+                    ),
+                  );
+                }, childCount: list.length),
               );
             },
           ),
