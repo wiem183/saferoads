@@ -8,13 +8,13 @@ class OnboardingPage extends StatelessWidget {
   final bool isLastPage;
 
   const OnboardingPage({
-    Key? key,
+    super.key,
     this.imagePath,
     required this.title,
     required this.body,
     this.onNext,
     this.isLastPage = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

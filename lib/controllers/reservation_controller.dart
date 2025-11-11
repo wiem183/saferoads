@@ -9,9 +9,13 @@ class ReservationController extends ChangeNotifier {
 
   List<Reservation> get reservations => _reservations;
 
-  Stream<List<Reservation>> get reservationsStream =>
-      _db.collection('reservations').snapshots().map((snap) =>
-          snap.docs.map((doc) => Reservation.fromJson(doc.data())).toList());
+  Stream<List<Reservation>> get reservationsStream => _db
+      .collection('reservations')
+      .snapshots()
+      .map(
+        (snap) =>
+            snap.docs.map((doc) => Reservation.fromJson(doc.data())).toList(),
+      );
 
   ReservationController() {
     reservationsStream.listen((list) {
@@ -23,14 +27,22 @@ class ReservationController extends ChangeNotifier {
   Future<bool> reserveSeats(String announcementId, Reservation res) async {
     if (!res.isValid()) return false;
     try {
-      var annDoc = await _db.collection('announcements').doc(announcementId).get();
+      var annDoc = await _db
+          .collection('announcements')
+          .doc(announcementId)
+          .get();
       if (!annDoc.exists) return false;
       Announcement ann = Announcement.fromJson(annDoc.data()!);
       if (ann.availableSeats < res.seatsReserved) return false;
       ann.availableSeats -= res.seatsReserved;
       ann.reservations.add(res);
-      await _db.collection('announcements').doc(announcementId).update(ann.toJson());
-      await _db.collection('reservations').add(res.toJson()..['announcementId'] = announcementId);
+      await _db
+          .collection('announcements')
+          .doc(announcementId)
+          .update(ann.toJson());
+      await _db
+          .collection('reservations')
+          .add(res.toJson()..['announcementId'] = announcementId);
       notifyListeners();
       return true;
     } catch (e) {

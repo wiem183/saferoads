@@ -149,8 +149,8 @@ class AnnouncementListScreen extends StatelessWidget {
           : FloatingActionButton(
               onPressed: () => Navigator.pushNamed(context, '/driver_create'),
               backgroundColor: Styles.defaultBlueColor,
-              child: const Icon(Icons.add, color: Colors.white),
               tooltip: 'Ajouter un trajet',
+              child: const Icon(Icons.add, color: Colors.white),
             ),
     );
   }

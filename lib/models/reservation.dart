@@ -2,7 +2,7 @@ class Reservation {
   String reserverName;
   String reserverPhone;
   int seatsReserved;
-  String paymentMethod;  
+  String paymentMethod;
 
   Reservation({
     required this.reserverName,

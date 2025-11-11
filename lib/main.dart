@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'controllers/announcement_controller.dart';
 import 'controllers/reservation_controller.dart';
+import 'controllers/auth_controller.dart';
 import 'styles/styles.dart';
 import 'services/storage_service.dart';
 
@@ -26,12 +27,13 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => AnnouncementController()),
         ChangeNotifierProvider(create: (_) => ReservationController()),
       ],
       child: MaterialApp(
         title: 'Covoiturage App',
-        debugShowCheckedModeBanner: false, 
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           brightness: Brightness.light,
           primaryColor: Styles.defaultBlueColor,
@@ -43,21 +45,20 @@ class MyApp extends StatelessWidget {
               fontWeight: FontWeight.bold,
               color: Styles.defaultRedColor,
             ),
-            bodyMedium: TextStyle(
-              fontSize: 16,
-              color: Styles.defaultRedColor,
-            ),
-            bodySmall: TextStyle(
-              fontSize: 12,
-              color: Styles.defaultGreyColor,
-            ),
+            bodyMedium: TextStyle(fontSize: 16, color: Styles.defaultRedColor),
+            bodySmall: TextStyle(fontSize: 12, color: Styles.defaultGreyColor),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(
               backgroundColor: Styles.defaultBlueColor,
               foregroundColor: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: Styles.defaultPadding, vertical: Styles.defaultPadding / 2),
-              shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
+              padding: EdgeInsets.symmetric(
+                horizontal: Styles.defaultPadding,
+                vertical: Styles.defaultPadding / 2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: Styles.defaultBorderRadius,
+              ),
             ),
           ),
           scrollbarTheme: Styles.scrollbarTheme,
@@ -86,8 +87,13 @@ class MyApp extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Styles.darkDefaultBlueColor,
               foregroundColor: Colors.black,
-              padding: EdgeInsets.symmetric(horizontal: Styles.defaultPadding, vertical: Styles.defaultPadding / 2),
-              shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
+              padding: EdgeInsets.symmetric(
+                horizontal: Styles.defaultPadding,
+                vertical: Styles.defaultPadding / 2,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: Styles.defaultBorderRadius,
+              ),
             ),
           ),
           scrollbarTheme: Styles.scrollbarTheme.copyWith(
@@ -96,7 +102,7 @@ class MyApp extends StatelessWidget {
           ),
         ),
         themeMode: ThemeMode.system,
-        home:  OnboardingWrapper(),
+        home: OnboardingWrapper(),
       ),
     );
   }

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../models/announcement.dart';
 import '../controllers/announcement_controller.dart';
+import '../controllers/auth_controller.dart';
 import '../styles/styles.dart';
 import 'map_screen.dart';
 
@@ -16,7 +17,8 @@ class DriverCreateScreen extends StatefulWidget {
   _DriverCreateScreenState createState() => _DriverCreateScreenState();
 }
 
-class _DriverCreateScreenState extends State<DriverCreateScreen> with SingleTickerProviderStateMixin {
+class _DriverCreateScreenState extends State<DriverCreateScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   String origin = '';
   String destination = '';
@@ -48,6 +50,23 @@ class _DriverCreateScreenState extends State<DriverCreateScreen> with SingleTick
     _buttonScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
+
+    // Auto-fill user info from authenticated user
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authController = Provider.of<AuthController>(
+        context,
+        listen: false,
+      );
+      final user = authController.currentUser;
+      if (user != null) {
+        setState(() {
+          driverName = user.name;
+          driverPhone = user.phone;
+          _driverNameController.text = user.name;
+          _driverPhoneController.text = user.phone;
+        });
+      }
+    });
   }
 
   @override
@@ -67,7 +86,9 @@ class _DriverCreateScreenState extends State<DriverCreateScreen> with SingleTick
       if (_formKey.currentState!.validate()) {
         setState(() => _currentStep++);
       } else {
-        _animationController.forward().then((_) => _animationController.reverse());
+        _animationController.forward().then(
+          (_) => _animationController.reverse(),
+        );
       }
     }
   }
@@ -93,15 +114,20 @@ class _DriverCreateScreenState extends State<DriverCreateScreen> with SingleTick
         driverName: driverName,
         driverPhone: driverPhone,
       );
-      Provider.of<AnnouncementController>(context, listen: false).addAnnouncement(ann);
-await StorageService.setString('myPhone', driverPhone);     
+      Provider.of<AnnouncementController>(
+        context,
+        listen: false,
+      ).addAnnouncement(ann);
+      await StorageService.setString('myPhone', driverPhone);
       Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Trajet posté avec succès !'),
           backgroundColor: Styles.darkDefaultYellowColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
+          shape: RoundedRectangleBorder(
+            borderRadius: Styles.defaultBorderRadius,
+          ),
           action: SnackBarAction(
             label: 'OK',
             textColor: Styles.darkDefaultLightWhiteColor,
@@ -110,7 +136,9 @@ await StorageService.setString('myPhone', driverPhone);
         ),
       );
     } else {
-      _animationController.forward().then((_) => _animationController.reverse());
+      _animationController.forward().then(
+        (_) => _animationController.reverse(),
+      );
     }
   }
 
@@ -154,10 +182,7 @@ await StorageService.setString('myPhone', driverPhone);
                   horizontal: Styles.defaultPadding,
                   vertical: Styles.defaultPadding,
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: _buildStepContent(),
-                ),
+                child: Form(key: _formKey, child: _buildStepContent()),
               ),
             ),
             _buildNavigationButtons(),
@@ -191,9 +216,7 @@ await StorageService.setString('myPhone', driverPhone);
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => MapScreen(
-                      selectionMode: 'origin',
-                    ),
+                    builder: (_) => MapScreen(selectionMode: 'origin'),
                   ),
                 );
                 if (result != null && result is Map<String, dynamic>) {
@@ -205,13 +228,19 @@ await StorageService.setString('myPhone', driverPhone);
               },
             ),
             const SizedBox(height: 24),
-            _buildMapPreview(destination, destinationLatLng, 'Destination', Colors.green),
+            _buildMapPreview(
+              destination,
+              destinationLatLng,
+              'Destination',
+              Colors.green,
+            ),
             _buildTextField(
               label: 'Destination',
               hint: 'Entrez la ville d\'arrivée',
               onChanged: (val) => setState(() => destination = val),
               icon: Icons.flag,
-              validator: (val) => val!.isEmpty ? 'Entrez une destination' : null,
+              validator: (val) =>
+                  val!.isEmpty ? 'Entrez une destination' : null,
             ),
             const SizedBox(height: 16),
             _buildMapButton(
@@ -221,9 +250,7 @@ await StorageService.setString('myPhone', driverPhone);
                 final result = await Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => MapScreen(
-                      selectionMode: 'destination',
-                    ),
+                    builder: (_) => MapScreen(selectionMode: 'destination'),
                   ),
                 );
                 if (result != null && result is Map<String, dynamic>) {
@@ -286,13 +313,16 @@ await StorageService.setString('myPhone', driverPhone);
                         time.hour,
                         time.minute,
                       );
-                      _dateController.text = DateFormat('dd/MM/yyyy HH:mm').format(departure!);
+                      _dateController.text = DateFormat(
+                        'dd/MM/yyyy HH:mm',
+                      ).format(departure!);
                     });
                   }
                 }
               },
               icon: Icons.calendar_today,
-              validator: (val) => departure != null ? null : 'Sélectionnez une date',
+              validator: (val) =>
+                  departure != null ? null : 'Sélectionnez une date',
             ),
             const SizedBox(height: 24),
             _buildTextField(
@@ -300,19 +330,29 @@ await StorageService.setString('myPhone', driverPhone);
               hint: 'Nombre de sièges',
               controller: _seatsController,
               keyboardType: TextInputType.number,
-              onChanged: (val) => setState(() => seats = int.tryParse(val) ?? 0),
+              onChanged: (val) =>
+                  setState(() => seats = int.tryParse(val) ?? 0),
               icon: Icons.event_seat,
-              validator: (val) => (int.tryParse(val!) != null && int.parse(val) > 0) ? null : 'Entrez un nombre valide',
+              validator: (val) =>
+                  (int.tryParse(val!) != null && int.parse(val) > 0)
+                  ? null
+                  : 'Entrez un nombre valide',
             ),
             const SizedBox(height: 24),
             _buildTextField(
               label: 'Prix (TND)',
               hint: 'Prix par siège',
               controller: _priceController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              onChanged: (val) => setState(() => price = double.tryParse(val) ?? 0.0),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              onChanged: (val) =>
+                  setState(() => price = double.tryParse(val) ?? 0.0),
               icon: Icons.attach_money,
-              validator: (val) => (double.tryParse(val!) != null && double.parse(val) > 0) ? null : 'Entrez un prix valide',
+              validator: (val) =>
+                  (double.tryParse(val!) != null && double.parse(val) > 0)
+                  ? null
+                  : 'Entrez un prix valide',
             ),
           ],
         );
@@ -321,33 +361,75 @@ await StorageService.setString('myPhone', driverPhone);
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildSectionTitle('Informations du chauffeur'),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Styles.darkDefaultYellowColor.withOpacity(0.1)
+                    : Styles.defaultYellowColor.withOpacity(0.1),
+                borderRadius: Styles.defaultBorderRadius,
+                border: Border.all(
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Styles.darkDefaultYellowColor.withOpacity(0.3)
+                      : Styles.defaultYellowColor.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 20,
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Styles.darkDefaultYellowColor
+                        : Styles.defaultYellowColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ces informations proviennent de votre compte et ne peuvent pas être modifiées',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Styles.darkDefaultGreyColor
+                            : Styles.defaultGreyColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
+            _buildTextField(
+              label: 'Nom chauffeur',
+              hint: 'Votre nom',
+              controller: _driverNameController,
+              readOnly: true,
+              icon: Icons.person,
+              validator: (val) => val!.isEmpty ? 'Entrez votre nom' : null,
+            ),
+            const SizedBox(height: 24),
+            _buildTextField(
+              label: 'Téléphone',
+              hint: 'Numéro de téléphone',
+              controller: _driverPhoneController,
+              readOnly: true,
+              keyboardType: TextInputType.phone,
+              validator: (val) =>
+                  (val?.length == 8 && int.tryParse(val!) != null)
+                  ? null
+                  : 'Numéro invalide (8 chiffres)',
+              icon: Icons.phone,
+            ),
+            const SizedBox(height: 24),
             _buildTextField(
               label: 'Modèle voiture',
               hint: 'Entrez le modèle de la voiture',
               controller: _carModelController,
               onChanged: (val) => setState(() => carModel = val),
               icon: Icons.directions_car,
-              validator: (val) => val!.isEmpty ? 'Entrez un modèle de voiture' : null,
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              label: 'Nom chauffeur',
-              hint: 'Votre nom',
-              controller: _driverNameController,
-              onChanged: (val) => setState(() => driverName = val),
-              icon: Icons.person,
-              validator: (val) => val!.isEmpty ? 'Entrez votre nom' : null,
-            ),
-            const SizedBox(height: 24),
-            _buildTextField(
-              label: 'Téléphone (8 chiffres)',
-              hint: 'Numéro de téléphone',
-              controller: _driverPhoneController,
-              keyboardType: TextInputType.phone,
-              onChanged: (val) => setState(() => driverPhone = val),
-              validator: (val) => (val?.length == 8 && int.tryParse(val!) != null) ? null : 'Numéro invalide (8 chiffres)',
-              icon: Icons.phone,
+              validator: (val) =>
+                  val!.isEmpty ? 'Entrez un modèle de voiture' : null,
             ),
           ],
         );
@@ -437,7 +519,11 @@ await StorageService.setString('myPhone', driverPhone);
     );
   }
 
-  Widget _buildMapButton(BuildContext context, {required String label, required VoidCallback onPressed}) {
+  Widget _buildMapButton(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onPressed,
+  }) {
     return GestureDetector(
       onTapDown: (_) => _animationController.forward(),
       onTapUp: (_) {
@@ -448,7 +534,10 @@ await StorageService.setString('myPhone', driverPhone);
       child: ScaleTransition(
         scale: _buttonScaleAnimation,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: Styles.defaultPadding / 1.2, horizontal: Styles.defaultPadding),
+          padding: EdgeInsets.symmetric(
+            vertical: Styles.defaultPadding / 1.2,
+            horizontal: Styles.defaultPadding,
+          ),
           decoration: BoxDecoration(
             borderRadius: Styles.defaultBorderRadius,
             border: Border.all(
@@ -484,7 +573,12 @@ await StorageService.setString('myPhone', driverPhone);
     );
   }
 
-  Widget _buildMapPreview(String location, LatLng? latLng, String label, Color markerColor) {
+  Widget _buildMapPreview(
+    String location,
+    LatLng? latLng,
+    String label,
+    Color markerColor,
+  ) {
     return location.isNotEmpty && latLng != null
         ? Container(
             height: 120,
@@ -502,16 +596,15 @@ await StorageService.setString('myPhone', driverPhone);
             child: ClipRRect(
               borderRadius: Styles.defaultBorderRadius,
               child: GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: latLng,
-                  zoom: 12,
-                ),
+                initialCameraPosition: CameraPosition(target: latLng, zoom: 12),
                 markers: {
                   Marker(
                     markerId: MarkerId(label),
                     position: latLng,
                     icon: BitmapDescriptor.defaultMarkerWithHue(
-                      markerColor == Colors.red ? BitmapDescriptor.hueRed : BitmapDescriptor.hueGreen,
+                      markerColor == Colors.red
+                          ? BitmapDescriptor.hueRed
+                          : BitmapDescriptor.hueGreen,
                     ),
                     infoWindow: InfoWindow(title: location),
                   ),
@@ -542,7 +635,9 @@ await StorageService.setString('myPhone', driverPhone);
                       ? Styles.darkDefaultBlueColor
                       : Styles.defaultBlueColor,
                 ),
-                padding: EdgeInsets.symmetric(vertical: Styles.defaultPadding / 1.2),
+                padding: EdgeInsets.symmetric(
+                  vertical: Styles.defaultPadding / 1.2,
+                ),
               ),
               child: Text(
                 'Précédent',
@@ -556,53 +651,53 @@ await StorageService.setString('myPhone', driverPhone);
             ),
           ),
           const SizedBox(width: 12),
-Expanded(
-  child: ElevatedButton(
-    onPressed: _currentStep < 2
-        ? () {
-            if (_formKey.currentState!.validate()) {
-              _nextStep();
-            } else {
-              _animationController
-                  .forward()
-                  .then((_) => _animationController.reverse());
-            }
-          }
-        : () {
-            if (_formKey.currentState!.validate()) {
-              _submitForm();
+          Expanded(
+            child: ElevatedButton(
+              onPressed: _currentStep < 2
+                  ? () {
+                      if (_formKey.currentState!.validate()) {
+                        _nextStep();
+                      } else {
+                        _animationController.forward().then(
+                          (_) => _animationController.reverse(),
+                        );
+                      }
+                    }
+                  : () {
+                      if (_formKey.currentState!.validate()) {
+                        _submitForm();
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Trajet ajouté avec succès'),
-                  backgroundColor: Colors.green,
-                  duration: Duration(seconds: 2),
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Trajet ajouté avec succès'),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          Navigator.pushAndRemoveUntil(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const MyRidesScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        });
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Styles.defaultBlueColor,
+                padding: EdgeInsets.symmetric(
+                  vertical: Styles.defaultPadding / 1.2,
                 ),
-              );
-
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (_) => const MyRidesScreen()),
-                  (route) => false,
-                );
-              });
-            }
-          },
-    style: ElevatedButton.styleFrom(
-      backgroundColor: Styles.defaultBlueColor,
-      padding: EdgeInsets.symmetric(
-        vertical: Styles.defaultPadding / 1.2,
-      ),
-    ),
-    child: Text(
-      _currentStep < 2 ? 'Suivant' : 'Terminer',
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-      ),
-    ),
-  ),),
+              ),
+              child: Text(
+                _currentStep < 2 ? 'Suivant' : 'Terminer',
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ),
         ],
       ),
     );
