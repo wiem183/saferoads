@@ -26,6 +26,7 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
   late String carModel;
   late String driverName;
   late String driverPhone;
+  late String driverEmail; // <-- nouveau champ ajouté
   LatLng? originLat;
   LatLng? destLat;
 
@@ -45,6 +46,7 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
     carModel = a.carModel;
     driverName = a.driverName;
     driverPhone = a.driverPhone;
+    driverEmail = a.driverEmail; // <-- initialisé depuis l'annonce
     originLat = a.originLatLng;
     destLat = a.destinationLatLng;
     _drawRoute();
@@ -63,15 +65,19 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
         Marker(
           markerId: const MarkerId('d'),
           position: destLat!,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen,
+          ),
         ),
       ]);
-    _polylines.add(Polyline(
-      polylineId: const PolylineId('route'),
-      points: [originLat!, destLat!],
-      color: Styles.defaultBlueColor,
-      width: 4,
-    ));
+    _polylines.add(
+      Polyline(
+        polylineId: const PolylineId('route'),
+        points: [originLat!, destLat!],
+        color: Styles.defaultBlueColor,
+        width: 4,
+      ),
+    );
   }
 
   Future<void> _pickDateTime() async {
@@ -83,10 +89,19 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
     );
     if (date == null) return;
     final time = await showTimePicker(
-        context: context, initialTime: TimeOfDay.fromDateTime(departure));
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(departure),
+    );
     if (time != null) {
-      setState(() =>
-          departure = DateTime(date.year, date.month, date.day, time.hour, time.minute));
+      setState(
+        () => departure = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        ),
+      );
     }
   }
 
@@ -94,8 +109,9 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
     final res = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-          builder: (_) =>
-              MapScreen(selectionMode: isOrigin ? 'origin' : 'destination')),
+        builder: (_) =>
+            MapScreen(selectionMode: isOrigin ? 'origin' : 'destination'),
+      ),
     );
     if (res == null) return;
     setState(() {
@@ -124,6 +140,7 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
       carModel: carModel,
       driverName: driverName,
       driverPhone: driverPhone,
+      driverEmail: driverEmail, // <-- champ ajouté ici
       reservations: widget.announcement.reservations,
     );
     await context.read<AnnouncementController>().addAnnouncement(updated);
@@ -138,17 +155,21 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
         content: const Text('Voulez-vous vraiment supprimer ce trajet ?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(d, false),
-              child: const Text('Annuler')),
+            onPressed: () => Navigator.pop(d, false),
+            child: const Text('Annuler'),
+          ),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              onPressed: () => Navigator.pop(d, true),
-              child: const Text('Supprimer')),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () => Navigator.pop(d, true),
+            child: const Text('Supprimer'),
+          ),
         ],
       ),
     );
     if (ok != true) return;
-    await context.read<AnnouncementController>().deleteAnnouncement(widget.announcement.id);
+    await context.read<AnnouncementController>().deleteAnnouncement(
+      widget.announcement.id,
+    );
     if (mounted) Navigator.pop(context);
   }
 
@@ -161,7 +182,9 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
         color: (dark ? Colors.grey[850] : Colors.white)?.withOpacity(0.85),
         boxShadow: [
           BoxShadow(
-            color: (dark ? Colors.black : Colors.grey.shade400).withOpacity(0.2),
+            color: (dark ? Colors.black : Colors.grey.shade400).withOpacity(
+              0.2,
+            ),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -206,7 +229,10 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
                     height: 200,
                     child: GoogleMap(
                       onMapCreated: (c) => _mapCtrl = c,
-                      initialCameraPosition: CameraPosition(target: originLat!, zoom: 10),
+                      initialCameraPosition: CameraPosition(
+                        target: originLat!,
+                        zoom: 10,
+                      ),
                       markers: _markers,
                       polylines: _polylines,
                       zoomControlsEnabled: false,
@@ -239,19 +265,47 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
                       const Divider(),
                       _dateTile(),
                       const Divider(),
-                      _inputField('Sièges disponibles', seats.toString(),
-                          (v) => seats = int.tryParse(v) ?? 1, TextInputType.number),
-                      _inputField('Prix (TND)', price.toStringAsFixed(0),
-                          (v) => price = double.tryParse(v) ?? 0,
-                          const TextInputType.numberWithOptions(decimal: true)),
-                      _inputField('Modèle voiture', carModel,
-                          (v) => carModel = v, TextInputType.text),
-                      _inputField('Nom chauffeur', driverName,
-                          (v) => driverName = v, TextInputType.text),
-                      _inputField('Téléphone (8 chiffres)', driverPhone,
-                          (v) => driverPhone = v, TextInputType.phone,
-                          validator: (v) =>
-                              (v?.length == 8) ? null : '8 chiffres requis'),
+                      _inputField(
+                        'Sièges disponibles',
+                        seats.toString(),
+                        (v) => seats = int.tryParse(v) ?? 1,
+                        TextInputType.number,
+                      ),
+                      _inputField(
+                        'Prix (TND)',
+                        price.toStringAsFixed(0),
+                        (v) => price = double.tryParse(v) ?? 0,
+                        const TextInputType.numberWithOptions(decimal: true),
+                      ),
+                      _inputField(
+                        'Modèle voiture',
+                        carModel,
+                        (v) => carModel = v,
+                        TextInputType.text,
+                      ),
+                      _inputField(
+                        'Nom chauffeur',
+                        driverName,
+                        (v) => driverName = v,
+                        TextInputType.text,
+                      ),
+                      _inputField(
+                        'Téléphone (8 chiffres)',
+                        driverPhone,
+                        (v) => driverPhone = v,
+                        TextInputType.phone,
+                        validator: (v) =>
+                            (v?.length == 8) ? null : '8 chiffres requis',
+                      ),
+                      _inputField(
+                        'Email chauffeur', // <-- nouveau champ ajouté
+                        driverEmail,
+                        (v) => driverEmail = v,
+                        TextInputType.emailAddress,
+                        validator: (v) => (v != null && v.contains('@'))
+                            ? null
+                            : 'Email valide requis',
+                      ),
                     ],
                   ),
                 ),
@@ -302,14 +356,21 @@ class _DriverEditScreenState extends State<DriverEditScreen> {
     return ListTile(
       leading: Icon(Icons.calendar_today, color: Styles.defaultBlueColor),
       title: Text(DateFormat('dd/MM/yyyy – HH:mm').format(departure)),
-      trailing: IconButton(icon: const Icon(Icons.edit_calendar), onPressed: _pickDateTime),
+      trailing: IconButton(
+        icon: const Icon(Icons.edit_calendar),
+        onPressed: _pickDateTime,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     );
   }
 
-  Widget _inputField(String label, String initial, Function(String) onChanged,
-      TextInputType type,
-      {String? Function(String?)? validator}) {
+  Widget _inputField(
+    String label,
+    String initial,
+    Function(String) onChanged,
+    TextInputType type, {
+    String? Function(String?)? validator,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: TextFormField(

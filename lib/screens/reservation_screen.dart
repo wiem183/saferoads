@@ -17,10 +17,12 @@ class ReservationScreen extends StatefulWidget {
   _ReservationScreenState createState() => _ReservationScreenState();
 }
 
-class _ReservationScreenState extends State<ReservationScreen> with SingleTickerProviderStateMixin {
+class _ReservationScreenState extends State<ReservationScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   String name = '';
   String phone = '';
+  String email = ''; // ← CHAMP EMAIL AJOUTÉ
   int seats = 1;
   String payment = 'cash';
   String cardNumber = '';
@@ -52,21 +54,39 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
       Reservation res = Reservation(
         reserverName: name,
         reserverPhone: phone,
+        reserverEmail: email, // ← EMAIL UTILISÉ ICI
         seatsReserved: seats,
         paymentMethod: payment,
       );
-      bool success = await Provider.of<ReservationController>(context, listen: false).reserveSeats(widget.announcementId, res);
+      bool success = await Provider.of<ReservationController>(
+        context,
+        listen: false,
+      ).reserveSeats(widget.announcementId, res);
       if (success) {
         if (payment == 'credit') {
-          bool paymentSuccess = await PaymentService.processCreditCardPayment(cardNumber, expiryDate, cvv);
+          bool paymentSuccess = await PaymentService.processCreditCardPayment(
+            cardNumber,
+            expiryDate,
+            cvv,
+          );
           if (paymentSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Paiement réussi !')));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Paiement réussi !')));
           } else {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur de paiement')));
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Erreur de paiement')));
             return;
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OK, merci. Vous payez en espèces lors de la rencontre.')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'OK, merci. Vous payez en espèces lors de la rencontre.',
+              ),
+            ),
+          );
         }
         Navigator.pop(context);
         Navigator.push(
@@ -74,10 +94,14 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
           MaterialPageRoute(builder: (_) => const HistoryScreen()),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Erreur de réservation')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Erreur de réservation')));
       }
     } else {
-      _animationController.forward().then((_) => _animationController.reverse());
+      _animationController.forward().then(
+        (_) => _animationController.reverse(),
+      );
     }
   }
 
@@ -133,7 +157,21 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                   keyboardType: TextInputType.phone,
                   onChanged: (val) => phone = val,
                   icon: Icons.phone,
-                  validator: (val) => (val!.length == 8 && int.tryParse(val) != null) ? null : 'Numéro invalide (8 chiffres)',
+                  validator: (val) =>
+                      (val!.length == 8 && int.tryParse(val) != null)
+                      ? null
+                      : 'Numéro invalide (8 chiffres)',
+                ),
+                const SizedBox(height: 16),
+                _buildTextField(
+                  label: 'Email', // ← CHAMP EMAIL AJOUTÉ
+                  hint: 'Entrez votre email',
+                  keyboardType: TextInputType.emailAddress,
+                  onChanged: (val) => email = val,
+                  icon: Icons.email,
+                  validator: (val) => (val!.isNotEmpty && val.contains('@'))
+                      ? null
+                      : 'Email invalide',
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
@@ -142,20 +180,29 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                   keyboardType: TextInputType.number,
                   onChanged: (val) => seats = int.tryParse(val) ?? 1,
                   icon: Icons.event_seat,
-                  validator: (val) => (int.tryParse(val!) != null && int.parse(val) > 0) ? null : 'Entrez un nombre valide',
+                  validator: (val) =>
+                      (int.tryParse(val!) != null && int.parse(val) > 0)
+                      ? null
+                      : 'Entrez un nombre valide',
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
                   initialValue: payment,
                   decoration: InputDecoration(
                     labelText: 'Méthode de paiement',
-                    border: OutlineInputBorder(borderRadius: Styles.defaultBorderRadius),
+                    border: OutlineInputBorder(
+                      borderRadius: Styles.defaultBorderRadius,
+                    ),
                     contentPadding: EdgeInsets.all(Styles.defaultPadding),
                   ),
-                  items: ['cash', 'credit'].map((p) => DropdownMenuItem(
-                    value: p,
-                    child: Text(p == 'cash' ? 'Espèces' : 'Carte crédit'),
-                  )).toList(),
+                  items: ['cash', 'credit']
+                      .map(
+                        (p) => DropdownMenuItem(
+                          value: p,
+                          child: Text(p == 'cash' ? 'Espèces' : 'Carte crédit'),
+                        ),
+                      )
+                      .toList(),
                   onChanged: (val) => setState(() => payment = val!),
                 ),
                 if (payment == 'credit') ...[
@@ -166,7 +213,8 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                     keyboardType: TextInputType.number,
                     onChanged: (val) => cardNumber = val,
                     icon: Icons.credit_card,
-                    validator: (val) => val!.length >= 16 ? null : 'Numéro de carte invalide',
+                    validator: (val) =>
+                        val!.length >= 16 ? null : 'Numéro de carte invalide',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -175,7 +223,9 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                     keyboardType: TextInputType.datetime,
                     onChanged: (val) => expiryDate = val,
                     icon: Icons.calendar_month,
-                    validator: (val) => val!.contains('/') && val.length == 5 ? null : 'Format invalide (MM/YY)',
+                    validator: (val) => val!.contains('/') && val.length == 5
+                        ? null
+                        : 'Format invalide (MM/YY)',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -184,7 +234,8 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                     keyboardType: TextInputType.number,
                     onChanged: (val) => cvv = val,
                     icon: Icons.lock,
-                    validator: (val) => val!.length == 3 ? null : 'CVV invalide (3 chiffres)',
+                    validator: (val) =>
+                        val!.length == 3 ? null : 'CVV invalide (3 chiffres)',
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -200,10 +251,16 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
                       scale: _buttonScaleAnimation,
                       child: Container(
                         width: double.infinity,
-                        padding: EdgeInsets.symmetric(vertical: Styles.defaultPadding, horizontal: Styles.defaultPadding * 2),
+                        padding: EdgeInsets.symmetric(
+                          vertical: Styles.defaultPadding,
+                          horizontal: Styles.defaultPadding * 2,
+                        ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [Styles.defaultBlueColor, Styles.defaultYellowColor],
+                            colors: [
+                              Styles.defaultBlueColor,
+                              Styles.defaultYellowColor,
+                            ],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -252,7 +309,9 @@ class _ReservationScreenState extends State<ReservationScreen> with SingleTicker
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: icon != null ? Icon(icon, color: Styles.defaultYellowColor) : null,
+        prefixIcon: icon != null
+            ? Icon(icon, color: Styles.defaultYellowColor)
+            : null,
         border: OutlineInputBorder(borderRadius: Styles.defaultBorderRadius),
         contentPadding: EdgeInsets.all(Styles.defaultPadding),
         filled: true,

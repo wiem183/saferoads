@@ -49,6 +49,7 @@ dependencies:
   cloud_firestore: ^5.4.4
   firebase_auth: ^5.3.1
   url_launcher: ^6.3.1
+  mailer: ^6.0.0  # ✅ Version corrigée
   table_calendar: ^3.1.2
   google_sign_in: ^6.2.1
 
