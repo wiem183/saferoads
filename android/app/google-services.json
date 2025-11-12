@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "645534682403",
+    "project_id": "wiem-app",
+    "storage_bucket": "wiem-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645534682403:android:aec898f6b352c5c8271096",
+        "android_client_info": {
+          "package_name": "com.example.covoiturage_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvHIGTpxIutGc1emfYwjJOQqjoV3dDKVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645534682403:android:8269b50cb64406cd271096",
+        "android_client_info": {
+          "package_name": "com.example.saferoad_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDvHIGTpxIutGc1emfYwjJOQqjoV3dDKVQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
