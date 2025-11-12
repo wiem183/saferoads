@@ -4,6 +4,8 @@ import 'driver_create_screen.dart';
 import 'profile_screen.dart';
 import '../widgets/app_drawer.dart';
 import '../styles/styles.dart';
+import '../screens/signalements_map_screen.dart'; // add this at the top
+
 
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
@@ -15,9 +17,12 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _current = 0; // Commence avec DriverCreateScreen
 
-  final _pages = const [DriverCreateScreen(), ProfileScreen()];
-
-  final _pageTitles = const ['Publier un trajet', 'Mon Profil'];
+  final _pages =  [
+    DriverCreateScreen(),
+    ProfileScreen(),
+    SignalementsMapScreen() // <-- new page
+  ];
+  final _pageTitles = const ['Publier un trajet', 'Mon Profil','Signalements'];
 
   @override
   Widget build(BuildContext context) {
@@ -62,6 +67,10 @@ class _HomeShellState extends State<HomeShell> {
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.person),
             label: 'Profil',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.map),
+            label: 'Signalements', // new tab
           ),
         ],
       ),

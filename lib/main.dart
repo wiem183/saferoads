@@ -10,6 +10,8 @@ import 'controllers/reservation_controller.dart';
 import 'controllers/auth_controller.dart';
 import 'styles/styles.dart';
 import 'services/storage_service.dart';
+import 'screens/signalements_map_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -103,7 +105,11 @@ class MyApp extends StatelessWidget {
         ),
         themeMode: ThemeMode.system,
         home: OnboardingWrapper(),
+        routes: {
+          '/signalements': (context) => SignalementsMapScreen(),
+        },
       ),
+
     );
   }
 }
