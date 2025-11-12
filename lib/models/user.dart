@@ -4,6 +4,7 @@ class User {
   String name;
   String phone;
   DateTime createdAt;
+  bool isActive;
 
   User({
     required this.id,
@@ -11,6 +12,7 @@ class User {
     required this.name,
     required this.phone,
     required this.createdAt,
+    this.isActive = true,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -20,6 +22,7 @@ class User {
       name: json['name'],
       phone: json['phone'],
       createdAt: DateTime.parse(json['createdAt']),
+      isActive: json['isActive'] ?? true,
     );
   }
 
@@ -30,6 +33,7 @@ class User {
       'name': name,
       'phone': phone,
       'createdAt': createdAt.toIso8601String(),
+      'isActive': isActive,
     };
   }
 

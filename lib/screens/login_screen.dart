@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../controllers/auth_controller.dart';
 import '../styles/styles.dart';
+import '../utils/validators.dart';
 import 'signup_screen.dart';
 import 'choice_screen.dart';
 
@@ -79,8 +81,36 @@ class _LoginScreenState extends State<LoginScreen>
     }
   }
 
+  Future<void> _signInWithGoogle() async {
+    final authController = Provider.of<AuthController>(context, listen: false);
+
+    final success = await authController.signInWithGoogle();
+
+    if (!mounted) return;
+
+    if (success) {
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeShell()));
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            authController.errorMessage ?? 'Erreur de connexion Google',
+          ),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: Styles.defaultBorderRadius,
+          ),
+        ),
+      );
+    }
+  }
+
   Future<void> _showForgotPasswordDialog() async {
     final TextEditingController emailController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return showDialog(
@@ -99,29 +129,39 @@ class _LoginScreenState extends State<LoginScreen>
                   : Styles.defaultRedColor,
             ),
           ),
-          content: TextField(
-            controller: emailController,
-            keyboardType: TextInputType.emailAddress,
-            style: TextStyle(
-              color: isDark
-                  ? Styles.darkDefaultLightWhiteColor
-                  : Styles.defaultRedColor,
-            ),
-            decoration: InputDecoration(
-              labelText: 'Email',
-              hintText: 'exemple@email.com',
-              labelStyle: TextStyle(
+          content: Form(
+            key: formKey,
+            child: TextFormField(
+              controller: emailController,
+              keyboardType: TextInputType.emailAddress,
+              validator: Validators.validateEmail,
+              style: TextStyle(
                 color: isDark
-                    ? Styles.darkDefaultGreyColor
-                    : Styles.defaultGreyColor,
+                    ? Styles.darkDefaultLightWhiteColor
+                    : Styles.defaultRedColor,
               ),
-              hintStyle: TextStyle(
-                color: isDark
-                    ? Styles.darkDefaultGreyColor
-                    : Styles.defaultGreyColor,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: Styles.defaultBorderRadius,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                hintText: 'exemple@email.com',
+                prefixIcon: Icon(
+                  Icons.email,
+                  color: isDark
+                      ? Styles.darkDefaultYellowColor
+                      : Styles.defaultYellowColor,
+                ),
+                labelStyle: TextStyle(
+                  color: isDark
+                      ? Styles.darkDefaultGreyColor
+                      : Styles.defaultGreyColor,
+                ),
+                hintStyle: TextStyle(
+                  color: isDark
+                      ? Styles.darkDefaultGreyColor
+                      : Styles.defaultGreyColor,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: Styles.defaultBorderRadius,
+                ),
               ),
             ),
           ),
@@ -139,16 +179,16 @@ class _LoginScreenState extends State<LoginScreen>
             ),
             ElevatedButton(
               onPressed: () async {
-                if (emailController.text.isNotEmpty) {
+                if (formKey.currentState!.validate()) {
                   final authController = Provider.of<AuthController>(
                     context,
                     listen: false,
                   );
                   final success = await authController.resetPassword(
-                    emailController.text,
+                    emailController.text.trim(),
                   );
 
-                  if (!mounted) return;
+                  if (!context.mounted) return;
 
                   Navigator.pop(context);
 
@@ -156,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen>
                     SnackBar(
                       content: Text(
                         success
-                            ? 'Email de réinitialisation envoyé'
+                            ? 'Email de réinitialisation envoyé ✓'
                             : authController.errorMessage ??
                                   'Erreur lors de l\'envoi',
                       ),
@@ -241,11 +281,7 @@ class _LoginScreenState extends State<LoginScreen>
                     hint: 'exemple@email.com',
                     icon: Icons.email,
                     keyboardType: TextInputType.emailAddress,
-                    validator: (val) {
-                      if (val!.isEmpty) return 'Entrez votre email';
-                      if (!val.contains('@')) return 'Email invalide';
-                      return null;
-                    },
+                    validator: Validators.validateEmail,
                   ),
                   const SizedBox(height: 24),
                   // Password Field
@@ -268,7 +304,7 @@ class _LoginScreenState extends State<LoginScreen>
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     validator: (val) =>
-                        val!.isEmpty ? 'Entrez votre mot de passe' : null,
+                        Validators.validateRequired(val, 'Le mot de passe'),
                   ),
                   const SizedBox(height: 16),
                   // Forgot Password
@@ -315,6 +351,75 @@ class _LoginScreenState extends State<LoginScreen>
                               color: Colors.white,
                             ),
                           ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Divider OR
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          color: isDark
+                              ? Styles.darkDefaultGreyColor
+                              : Styles.defaultGreyColor,
+                          thickness: 1,
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OU',
+                          style: TextStyle(
+                            color: isDark
+                                ? Styles.darkDefaultGreyColor
+                                : Styles.defaultGreyColor,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          color: isDark
+                              ? Styles.darkDefaultGreyColor
+                              : Styles.defaultGreyColor,
+                          thickness: 1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // Google Sign-In Button
+                  OutlinedButton.icon(
+                    onPressed: authController.isLoading
+                        ? null
+                        : _signInWithGoogle,
+                    icon: SvgPicture.asset(
+                      'assets/google_logo.svg',
+                      height: 24,
+                      width: 24,
+                    ),
+                    label: const Text(
+                      'Continuer avec Google',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: BorderSide(
+                        color: isDark
+                            ? Styles.darkDefaultGreyColor
+                            : Styles.defaultGreyColor,
+                        width: 2,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: Styles.defaultBorderRadius,
+                      ),
+                      foregroundColor: isDark
+                          ? Styles.darkDefaultLightWhiteColor
+                          : Styles.defaultRedColor,
+                    ),
                   ),
                   const SizedBox(height: 32),
                   // Signup Link
