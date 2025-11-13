@@ -107,7 +107,9 @@ class ReservationController extends ChangeNotifier {
       }
 
       // --- Announcement reservation ---
-      if (announcementId != null && announcementId.isNotEmpty) {
+      if (announcementId != null &&
+          announcementId.isNotEmpty &&
+          announcementId != "default") {
         print("🚗 Reserving announcement ID: $announcementId");
 
         final annDoc = await _db.collection('announcements').doc(announcementId).get();
