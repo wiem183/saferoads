@@ -7,6 +7,7 @@ import 'history_screen.dart';
 import 'search_screen.dart';
 import 'driver_create_screen.dart';   
 import 'my_rides_screen.dart';
+import 'amende_screens_example.dart';
 
 class HomeShell extends StatefulWidget {
   const HomeShell({Key? key}) : super(key: key);
@@ -25,13 +26,9 @@ class _HomeShellState extends State<HomeShell> {
     SearchScreen(),       
     DriverCreateScreen(),  
     MyRidesScreen(), 
-    ParkingListScreen(),      
+    ParkingListScreen(),
+    UserAmendesScreen(userId: 'current-user'),      
   ];
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +49,14 @@ class _HomeShellState extends State<HomeShell> {
               icon: Icon(CupertinoIcons.plus_app), label: 'Publier'),
           BottomNavigationBarItem(
               icon: Icon(CupertinoIcons.person), label: 'Mes trajets'),
-              BottomNavigationBarItem(
-  icon: Icon(Icons.local_parking),
-  label: 'Parkings',
-),
-
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_parking),
+            label: 'Parkings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.traffic),
+            label: 'Amendes',
+          ),
         ],
       ),
     );
