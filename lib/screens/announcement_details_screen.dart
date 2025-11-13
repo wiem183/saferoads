@@ -1,3 +1,5 @@
+// ignore_for_file: library_private_types_in_public_api, deprecated_member_use
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/announcement.dart';
@@ -38,6 +40,8 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: CustomScrollView(
         slivers: [
@@ -51,21 +55,15 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Styles.darkDefaultLightWhiteColor
-                      : Styles.defaultRedColor,
+                  color: isDark ? Styles.darkDefaultLightWhiteColor : Styles.defaultRedColor,
                 ),
               ),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Styles.darkDefaultBlueColor
-                          : Styles.defaultBlueColor,
-                      Theme.of(context).brightness == Brightness.dark
-                          ? Styles.darkDefaultYellowColor
-                          : Styles.defaultYellowColor,
+                      isDark ? Styles.darkDefaultBlueColor : Styles.defaultBlueColor,
+                      isDark ? Styles.darkDefaultYellowColor : Styles.defaultYellowColor,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -76,9 +74,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
             leading: IconButton(
               icon: Icon(
                 Icons.arrow_back,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Styles.darkDefaultLightWhiteColor
-                    : Colors.white,
+                color: isDark ? Styles.darkDefaultLightWhiteColor : Colors.white,
               ),
               onPressed: () => Navigator.pop(context),
             ),
@@ -92,7 +88,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                   color: Colors.transparent,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
+                      color: isDark
                           ? Styles.darkDefaultLightGreyColor.withOpacity(0.7)
                           : Styles.defaultLightGreyColor.withOpacity(0.7),
                       borderRadius: Styles.defaultBorderRadius,
@@ -104,7 +100,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                         ),
                       ],
                       border: Border.all(
-                        color: Theme.of(context).brightness == Brightness.dark
+                        color: isDark
                             ? Styles.darkDefaultGreyColor.withOpacity(0.3)
                             : Styles.defaultGreyColor.withOpacity(0.3),
                       ),
@@ -118,7 +114,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                             context,
                             icon: Icons.calendar_today,
                             text:
-                                'Départ: ${DateFormat('dd MMM yyyy, HH:mm').format(widget.announcement.departureDateTime)}',
+                            'Départ: ${DateFormat('dd MMM yyyy, HH:mm').format(widget.announcement.departureDateTime)}',
                           ),
                           const SizedBox(height: 12),
                           _buildInfoRow(
@@ -143,7 +139,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                             context,
                             icon: Icons.person,
                             text:
-                                'Chauffeur: ${widget.announcement.driverName} (${widget.announcement.driverPhone})',
+                            'Chauffeur: ${widget.announcement.driverName} (${widget.announcement.driverPhone})',
                           ),
                           const SizedBox(height: 20),
                           if (widget.announcement.availableSeats > 0)
@@ -158,6 +154,9 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                                     backgroundColor: Colors.transparent,
                                     builder: (_) => ReservationScreen(
                                       announcementId: widget.announcement.id,
+                                      parkingId: '',
+                                      parkingName: '',
+                                      pricePerHour: 0.0,
                                     ),
                                   );
                                 },
@@ -172,18 +171,14 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                                     ),
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
-                                        colors: [
-                                          Styles.defaultBlueColor,
-                                          Styles.defaultYellowColor,
-                                        ],
+                                        colors: [Styles.defaultBlueColor, Styles.defaultYellowColor],
                                         begin: Alignment.centerLeft,
                                         end: Alignment.centerRight,
                                       ),
                                       borderRadius: Styles.defaultBorderRadius,
                                       boxShadow: [
                                         BoxShadow(
-                                          color: Styles.defaultBlueColor
-                                              .withOpacity(0.3),
+                                          color: Styles.defaultBlueColor.withOpacity(0.3),
                                           blurRadius: 8,
                                           offset: const Offset(0, 4),
                                         ),
@@ -192,7 +187,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
                                     child: Text(
                                       'Réserver',
                                       textAlign: TextAlign.center,
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.white,
@@ -216,15 +211,14 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
   }
 
   Widget _buildInfoRow(BuildContext context, {required IconData icon, required String text}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Icon(
           icon,
           size: 20,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Styles.darkDefaultYellowColor
-              : Styles.defaultYellowColor,
+          color: isDark ? Styles.darkDefaultYellowColor : Styles.defaultYellowColor,
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -232,9 +226,7 @@ class _AnnouncementDetailsScreenState extends State<AnnouncementDetailsScreen>
             text,
             style: TextStyle(
               fontSize: 16,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Styles.darkDefaultLightWhiteColor
-                  : Styles.defaultRedColor,
+              color: isDark ? Styles.darkDefaultLightWhiteColor : Styles.defaultRedColor,
             ),
           ),
         ),

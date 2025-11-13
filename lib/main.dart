@@ -1,10 +1,15 @@
+// ignore_for_file: avoid_print
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:covoiturage_app/onboarding/onboarding_wrapper.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+
+import 'firebase_options.dart';
 import 'controllers/announcement_controller.dart';
 import 'controllers/reservation_controller.dart';
 import 'controllers/auth_controller.dart';
@@ -12,14 +17,51 @@ import 'styles/styles.dart';
 import 'services/storage_service.dart';
 import 'screens/signalements_map_screen.dart';
 
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   await initializeDateFormatting('fr_FR', null);
   Intl.defaultLocale = 'fr_FR';
+
   await StorageService.init();
+
+  // 💡 Passe le numéro du téléphone de l’utilisateur (ou autre identifiant)
+  await initFCMAndSaveToken(phone: "93739324");
+
   runApp(const MyApp());
+}
+
+/// 🔹 Enregistre le token FCM du client dans Firestore
+Future<void> initFCMAndSaveToken({required String phone}) async {
+  final messaging = FirebaseMessaging.instance;
+
+  // 🔔 Demande la permission d’envoyer des notifications
+  await messaging.requestPermission(alert: true, badge: true, sound: true);
+
+  // 🧠 Récupération du token unique FCM
+  final token = await messaging.getToken();
+
+  if (token != null) {
+    print("📲 Token FCM : $token");
+
+    // ✅ Sauvegarde du token dans Firestore
+    await FirebaseFirestore.instance.collection('fcm_tokens').doc(phone).set({
+      'token': token,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  } else {
+    print("⚠️ Aucun token FCM trouvé !");
+  }
+
+  // 🔁 Rafraîchissement automatique si le token change
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    print("🔁 Nouveau token FCM détecté : $newToken");
+    await FirebaseFirestore.instance.collection('fcm_tokens').doc(phone).set({
+      'token': newToken,
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -109,7 +151,6 @@ class MyApp extends StatelessWidget {
           '/signalements': (context) => SignalementsMapScreen(),
         },
       ),
-
     );
   }
 }

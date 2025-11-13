@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print, use_super_parameters
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
@@ -12,16 +14,9 @@ class ReservationController extends ChangeNotifier {
 
   List<Reservation> get reservations => _reservations;
 
-  Stream<List<Reservation>> get reservationsStream => _db
-      .collection('reservations')
-      .snapshots()
-      .map(
-        (snap) => snap.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return Reservation.fromJson(data);
-        }).toList(),
-      );
+  Stream<List<Reservation>> get reservationsStream =>
+      _db.collection('reservations').snapshots().map((snap) =>
+          snap.docs.map((doc) => Reservation.fromJson(doc.data())).toList());
 
   ReservationController() {
     reservationsStream.listen((list) {
@@ -30,250 +25,192 @@ class ReservationController extends ChangeNotifier {
     });
   }
 
-  // 📧 Méthode pour envoyer des emails directement
+  // --- Email sending ---
   Future<void> _sendEmail({
     required String to,
     required String subject,
     required String message,
   }) async {
     try {
-      if (kDebugMode) {
-        print('🎯 📧 DÉBUT _sendEmail');
-        print('🎯 À: $to');
-        print('🎯 Sujet: $subject');
-        print('🔧 Tentative d\'envoi SMTP réel...');
-      }
-
-      // Configuration SMTP Gmail
       final smtpServer = gmail(
         'errouissi.wiem18@gmail.com',
-        'eoku svhn awsd ckcq', // Mot de passe d'application
+        'eoku svhn awsd ckcq', // App password
       );
 
-      // Création du message
       final emailMessage = Message()
         ..from = const Address('errouissi.wiem18@gmail.com', 'Covoiturage App')
         ..recipients.add(to)
         ..subject = subject
         ..text = message;
 
-      // Envoi de l'email
-      final sendReport = await send(emailMessage, smtpServer);
-
-      if (kDebugMode) {
-        print('✅ Email envoyé avec succès à: $to');
-        print('📨 Rapport d\'envoi: $sendReport');
-      }
+      await send(emailMessage, smtpServer);
+      if (kDebugMode) print("✅ Email sent to: $to");
     } catch (e) {
-      if (kDebugMode) {
-        print('🎯 ❌ ERREUR CAPTURÉE dans _sendEmail: $e');
-        print('🎯 ❌ Type d\'erreur: ${e.runtimeType}');
-      }
+      if (kDebugMode) print("❌ Error sending email: $e");
     }
   }
 
-  Future<bool> reserveSeats(String announcementId, Reservation res) async {
+  /// Reserve seats for an announcement or a parking spot
+  Future<bool> reserveSeatsOrParking({
+    String? announcementId,
+    String? parkingId,
+    required Reservation res,
+  }) async {
     if (!res.isValid()) {
-      if (kDebugMode) print("❌ Réservation invalide");
+      print("❌ Reservation invalide");
       return false;
     }
 
     try {
-      if (kDebugMode) print("🔄 Début de la réservation...");
+      bool reservationCreated = false;
 
-      // Récupération du trajet
-      var annDoc = await _db
-          .collection('announcements')
-          .doc(announcementId)
-          .get();
+      // --- Parking reservation ---
+      if (parkingId != null && parkingId.isNotEmpty) {
+        print("🚗 Reserving parking ID: $parkingId");
 
-      if (!annDoc.exists) {
-        if (kDebugMode) print("❌ Annonce non trouvée: $announcementId");
-        return false;
+        final parkDoc = await _db.collection('parkings').doc(parkingId).get();
+        if (!parkDoc.exists) {
+          print("❌ Parking not found!");
+          return false;
+        }
+
+        int availableSpots = parkDoc.data()?['available_spots'] ?? 0;
+        if (availableSpots <= 0) {
+          print("❌ Parking full! Adding to waiting list.");
+          final tokenSnap = await _db.collection('fcm_tokens').doc(res.reserverPhone).get();
+          final token = tokenSnap.data()?['token'];
+
+          await _db.collection('waiting_list').add({
+            'parking_id': parkingId,
+            'user_name': res.reserverName,
+            'user_phone': res.reserverPhone,
+            'fcm_token': token,
+            'notified': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+          return false;
+        }
+
+        await _db.collection('parkings').doc(parkingId).update({
+          'available_spots': availableSpots - 1,
+        });
+
+        await _db.collection('reservations').add({
+          ...res.toJson(),
+          'parking_id': parkingId,
+          'type': 'parking',
+          'status': 'active',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        reservationCreated = true;
       }
 
-      Announcement ann = Announcement.fromJson(annDoc.data()!);
+      // --- Announcement reservation ---
+      if (announcementId != null && announcementId.isNotEmpty) {
+        print("🚗 Reserving announcement ID: $announcementId");
 
-      // Vérification des sièges disponibles
-      if (ann.availableSeats < res.seatsReserved) {
-        if (kDebugMode) {
-          print(
-            "❌ Sièges insuffisants. Disponibles: ${ann.availableSeats}, Demandés: ${res.seatsReserved}",
+        final annDoc = await _db.collection('announcements').doc(announcementId).get();
+        if (!annDoc.exists) {
+          print("❌ Announcement with ID $announcementId not found!");
+          return false;
+        }
+
+        final ann = Announcement.fromJson(annDoc.data()!);
+
+        if (ann.availableSeats < res.seatsReserved) {
+          print("❌ Not enough seats! Requested: ${res.seatsReserved}, Available: ${ann.availableSeats}");
+          return false;
+        }
+
+        // Firestore transaction
+        await _db.runTransaction((transaction) async {
+          transaction.update(
+            _db.collection('announcements').doc(announcementId),
+            {
+              'availableSeats': FieldValue.increment(-res.seatsReserved),
+              'reservations': FieldValue.arrayUnion([res.toJson()]),
+            },
+          );
+
+          final reservationRef = _db.collection('reservations').doc();
+          transaction.set(reservationRef, {
+            ...res.toJson(),
+            'announcementId': announcementId,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+        });
+
+        reservationCreated = true;
+
+        // --- Send emails ---
+        // --- Send emails ---
+        final String formattedDate =
+        DateFormat('dd/MM/yyyy à HH:mm').format(ann.departureDateTime);
+        final double totalPrice = ann.price * res.seatsReserved;
+
+// Send email to reserver if email exists
+        final reserverEmail = res.reserverEmail;
+        if (reserverEmail != null && reserverEmail.isNotEmpty) {
+          _sendEmail(
+            to: reserverEmail,
+            subject: "Réservation confirmée pour votre trajet",
+            message:
+            "Bonjour ${res.reserverName},\n\nVotre réservation pour le trajet de ${ann.origin} à ${ann.destination} le $formattedDate "
+                "a été confirmée.\nNombre de sièges: ${res.seatsReserved}\nPrix total: $totalPrice TND.\n\nMerci d'utiliser notre application.",
           );
         }
-        return false;
+
+// Send email to driver if email exists
+        final driverEmail = ann.driverEmail;
+        if (driverEmail != null && driverEmail.isNotEmpty) {
+          _sendEmail(
+            to: driverEmail,
+            subject: "Nouvelle réservation pour votre trajet",
+            message:
+            "Bonjour ${ann.driverName},\n\n${res.reserverName} a réservé ${res.seatsReserved} siège(s) pour votre trajet de ${ann.origin} à ${ann.destination} le $formattedDate.\n\nMerci d'utiliser notre application.",
+          );
+        }
+
       }
 
-      String? reservationId;
-
-      // Utiliser une transaction pour plus de sécurité
-      await _db.runTransaction((transaction) async {
-        // Mise à jour des sièges disponibles
-        transaction.update(
-          _db.collection('announcements').doc(announcementId),
-          {
-            'availableSeats': FieldValue.increment(-res.seatsReserved),
-            'reservations': FieldValue.arrayUnion([res.toJson()]),
-          },
-        );
-
-        // Ajout de la réservation
-        final reservationData = res.toJson()
-          ..['announcementId'] = announcementId
-          ..['createdAt'] = FieldValue.serverTimestamp();
-
-        final reservationRef = _db.collection('reservations').doc();
-        reservationId = reservationRef.id;
-        transaction.set(reservationRef, reservationData);
-      });
-
-      if (kDebugMode) print("✅ Transaction Firestore réussie");
-
-      // Préparation des données pour les emails
-      final String formattedDate = DateFormat(
-        'dd/MM/yyyy à HH:mm',
-      ).format(ann.departureDateTime);
-      final double totalPrice = ann.price * res.seatsReserved;
-
-      if (kDebugMode) {
-        print("🎯 AVANT ENVOI EMAILS - DEBUG");
-        print("🎯 Email passager: ${res.reserverEmail}");
-        print("🎯 Email conducteur: ${ann.driverEmail}");
-      }
-
-      // 📧 Email de confirmation au PASSAGER
-      if (kDebugMode) print("🎯 APPEL _sendEmail PASSAGER");
-      await _sendEmail(
-        to: res.reserverEmail,
-        subject: 'Confirmation de votre réservation - Covoiturage App',
-        message:
-            '''
-Bonjour ${res.reserverName},
-
-VOTRE RÉSERVATION EST CONFIRMÉE ! 🎉
-
-Détails de votre réservation :
----------------------------------
-🔸 Trajet : ${ann.origin} → ${ann.destination}
-🔸 Date et heure : $formattedDate
-🔸 Sièges réservés : ${res.seatsReserved}
-🔸 Prix total : ${totalPrice.toStringAsFixed(2)} TND
-🔸 Conducteur : ${ann.driverName}
-🔸 Téléphone conducteur : ${ann.driverPhone}
-
-Informations importantes :
-• Présentez-vous au point de rendez-vous 10 minutes à l'avance
-• Ayez votre pièce d'identité avec vous
-• Le paiement se fait directement au conducteur
-
-En cas de problème, contactez le conducteur :
-${ann.driverName} - ${ann.driverPhone}
-
-Merci d'utiliser notre application de covoiturage !
-
-Cordialement,
-L'équipe Covoiturage App
-📞 Contact : +216 12 345 678
-''',
-      );
-
-      // 📧 Email de notification au CONDUCTEUR
-      if (kDebugMode) print("🎯 APPEL _sendEmail CONDUCTEUR");
-      await _sendEmail(
-        to: ann.driverEmail,
-        subject: 'Nouvelle réservation sur votre trajet - Covoiturage App',
-        message:
-            '''
-Bonjour ${ann.driverName},
-
-VOUS AVEZ UNE NOUVELLE RÉSERVATION ! 🚗
-
-Détails de la réservation :
------------------------------
-🔸 Passager : ${res.reserverName}
-🔸 Email : ${res.reserverEmail}
-🔸 Téléphone : ${res.reserverPhone}
-🔸 Trajet : ${ann.origin} → ${ann.destination}
-🔸 Date : $formattedDate
-🔸 Sièges réservés : ${res.seatsReserved}
-🔸 Revenu : ${totalPrice.toStringAsFixed(2)} TND
-
-Informations du passager :
-• Nom : ${res.reserverName}
-• Email : ${res.reserverEmail}
-• Téléphone : ${res.reserverPhone}
-
-Actions requises :
-1. Contactez le passager pour confirmer le point de rendez-vous
-2. Vérifiez les documents si nécessaire
-3. Soyez à l'heure au point de rendez-vous
-
-En cas de problème, contactez le passager :
-${res.reserverName} - ${res.reserverPhone}
-
-Bon trajet !
-
-Cordialement,
-L'équipe Covoiturage App
-📞 Support : +216 12 345 678
-''',
-      );
-
-      if (kDebugMode) {
-        print("🎯 APRÈS ENVOI EMAILS - DEBUG");
-        print("✅ Réservation complétée avec succès");
-        print("📧 Méthodes _sendEmail appelées");
-      }
-
-      notifyListeners();
-      return true;
+      return reservationCreated;
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Erreur lors de la réservation : $e");
-        print("❌ Stack trace: ${e.toString()}");
-      }
+      print("🔥 Firestore error: $e");
       return false;
     }
   }
 
-  // Méthode pour récupérer les réservations d'un utilisateur
+  // --- User reservations ---
   Stream<List<Reservation>> getUserReservations(String userEmail) {
     return _db
         .collection('reservations')
         .where('reserverEmail', isEqualTo: userEmail)
         .snapshots()
-        .map(
-          (snap) => snap.docs.map((doc) {
-            final data = doc.data();
-            data['id'] = doc.id;
-            return Reservation.fromJson(data);
-          }).toList(),
-        );
+        .map((snap) =>
+        snap.docs.map((doc) => Reservation.fromJson(doc.data())).toList());
   }
 
-  // Méthode pour annuler une réservation
+  // --- Cancel reservation ---
   Future<bool> cancelReservation(
-    String reservationId,
-    String announcementId,
-    int seats,
-  ) async {
+      String reservationId,
+      String announcementId,
+      int seats,
+      ) async {
     try {
       await _db.runTransaction((transaction) async {
-        // Remettre les sièges disponibles
         transaction.update(
           _db.collection('announcements').doc(announcementId),
           {'availableSeats': FieldValue.increment(seats)},
         );
-
-        // Supprimer la réservation
         transaction.delete(_db.collection('reservations').doc(reservationId));
       });
 
-      if (kDebugMode) print("✅ Réservation annulée avec succès");
+      print("✅ Reservation cancelled successfully");
       notifyListeners();
       return true;
     } catch (e) {
-      if (kDebugMode) print("❌ Erreur lors de l'annulation : $e");
+      print("❌ Error cancelling reservation: $e");
       return false;
     }
   }

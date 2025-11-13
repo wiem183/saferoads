@@ -1,5 +1,5 @@
 {
-  "name": "functions",
+  "name": "notify-parking",
   "description": "Cloud Functions for Firebase",
   "scripts": {
     "serve": "firebase emulators:start --only functions",
@@ -12,16 +12,10 @@
     "node": "22"
   },
   "main": "index.js",
+  
   "dependencies": {
-<<<<<<< HEAD
     "firebase-admin": "^12.6.0",
-    "firebase-functions": "^6.0.1",
-    "nodemailer": "^7.0.10"
-=======
-    "firebase-admin": "^13.6.0",
-    "firebase-functions": "^7.0.0",
-    "fs": "^0.0.1-security"
->>>>>>> origin/Amendes
+    "firebase-functions": "^6.0.1"
   },
   "devDependencies": {
     "firebase-functions-test": "^3.1.0"

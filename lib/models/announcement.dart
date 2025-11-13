@@ -13,7 +13,7 @@ class Announcement {
   String carModel;
   String driverName;
   String driverPhone;
-  String driverEmail;
+  String? driverEmail; // Keep optional to handle both branches
   List<Reservation> reservations;
 
   Announcement({
@@ -28,37 +28,36 @@ class Announcement {
     required this.carModel,
     required this.driverName,
     required this.driverPhone,
-    required this.driverEmail,
+    this.driverEmail,
     this.reservations = const [],
   });
 
-  // --- Conversion JSON → Objet AVEC GESTION DES NULLS ---
+  // --- Conversion JSON → Objet avec gestion des nulls ---
   factory Announcement.fromJson(Map<String, dynamic> json) {
     return Announcement(
-      id: json['id'] ?? '', // Gestion du null
-      origin: json['origin'] ?? 'Non spécifiée', // Gestion du null
-      destination: json['destination'] ?? 'Non spécifiée', // Gestion du null
+      id: json['id'] ?? '',
+      origin: json['origin'] ?? 'Non spécifiée',
+      destination: json['destination'] ?? 'Non spécifiée',
       originLatLng: json['originLatLng'] != null
           ? LatLng(
-              (json['originLatLng']['lat'] ?? 0.0).toDouble(),
-              (json['originLatLng']['lng'] ?? 0.0).toDouble(),
-            )
+        (json['originLatLng']['lat'] ?? 0.0).toDouble(),
+        (json['originLatLng']['lng'] ?? 0.0).toDouble(),
+      )
           : null,
       destinationLatLng: json['destinationLatLng'] != null
           ? LatLng(
-              (json['destinationLatLng']['lat'] ?? 0.0).toDouble(),
-              (json['destinationLatLng']['lng'] ?? 0.0).toDouble(),
-            )
+        (json['destinationLatLng']['lat'] ?? 0.0).toDouble(),
+        (json['destinationLatLng']['lng'] ?? 0.0).toDouble(),
+      )
           : null,
       departureDateTime: DateTime.parse(
-        json['departureDateTime'] ?? DateTime.now().toIso8601String(),
-      ),
+          json['departureDateTime'] ?? DateTime.now().toIso8601String()),
       availableSeats: (json['availableSeats'] ?? 1).toInt(),
       price: (json['price'] ?? 0.0).toDouble(),
-      carModel: json['carModel'] ?? 'Modèle non spécifié', // Gestion du null
-      driverName: json['driverName'] ?? 'Nom non spécifié', // Gestion du null
-      driverPhone: json['driverPhone'] ?? '', // Gestion du null
-      driverEmail: json['driverEmail'] ?? '', // Gestion du null
+      carModel: json['carModel'] ?? 'Modèle non spécifié',
+      driverName: json['driverName'] ?? 'Nom non spécifié',
+      driverPhone: json['driverPhone'] ?? '',
+      driverEmail: json['driverEmail'], // optional
       reservations: (json['reservations'] as List? ?? [])
           .map((r) => Reservation.fromJson(r))
           .toList(),
@@ -75,10 +74,7 @@ class Announcement {
           ? {'lat': originLatLng!.latitude, 'lng': originLatLng!.longitude}
           : null,
       'destinationLatLng': destinationLatLng != null
-          ? {
-              'lat': destinationLatLng!.latitude,
-              'lng': destinationLatLng!.longitude,
-            }
+          ? {'lat': destinationLatLng!.latitude, 'lng': destinationLatLng!.longitude}
           : null,
       'departureDateTime': departureDateTime.toIso8601String(),
       'availableSeats': availableSeats,
@@ -99,7 +95,6 @@ class Announcement {
         price > 0 &&
         driverPhone.length == 8 &&
         int.tryParse(driverPhone) != null &&
-        driverEmail.isNotEmpty &&
-        driverEmail.contains('@');
+        (driverEmail == null || driverEmail!.contains('@'));
   }
 }

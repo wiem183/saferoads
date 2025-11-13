@@ -1,3 +1,5 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:covoiturage_app/models/announcement.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -94,27 +96,19 @@ class AnnouncementListScreen extends StatelessWidget {
 
               List<Announcement> list = snap.data!;
 
-              // CORRECTION : Gestion des valeurs nulles
+              // Filter by origin and destination
               if (origin.isNotEmpty) {
                 list = list
-                    .where(
-                      (a) =>
-                          a.origin != null &&
-                          a.origin.toLowerCase().contains(origin.toLowerCase()),
-                    )
+                    .where((a) => a.origin.toLowerCase().contains(origin.toLowerCase()))
                     .toList();
               }
               if (destination.isNotEmpty) {
                 list = list
-                    .where(
-                      (a) =>
-                          a.destination != null &&
-                          a.destination.toLowerCase().contains(
-                            destination.toLowerCase(),
-                          ),
-                    )
+                    .where((a) => a.destination.toLowerCase().contains(destination.toLowerCase()))
                     .toList();
               }
+
+              // Filter by available seats
               list = list.where((a) => a.availableSeats >= seats).toList();
 
               if (list.isEmpty) {
@@ -137,27 +131,27 @@ class AnnouncementListScreen extends StatelessWidget {
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  final ann = list[index];
-                  return InkWell(
-                    onTap: () => Navigator.push(
-                      context,
-                      PageRouteBuilder(
-                        pageBuilder: (_, __, ___) => isPassenger
-                            ? AnnouncementDetailsScreen(announcement: ann)
-                            : DriverEditScreen(announcement: ann),
-                        transitionsBuilder: (_, animation, __, child) =>
-                            FadeTransition(opacity: animation, child: child),
+                delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                    final ann = list[index];
+                    return InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => isPassenger
+                              ? AnnouncementDetailsScreen(announcement: ann)
+                              : DriverEditScreen(announcement: ann),
+                          transitionsBuilder: (_, animation, __, child) =>
+                              FadeTransition(opacity: animation, child: child),
+                        ),
                       ),
-                    ),
-                    splashColor: Styles.defaultBlueColor.withOpacity(0.2),
-                    borderRadius: Styles.defaultBorderRadius,
-                    child: Hero(
-                      tag: ann.id,
-                      child: AnnouncementCard(announcement: ann),
-                    ),
-                  );
-                }, childCount: list.length),
+                      splashColor: Styles.defaultBlueColor.withOpacity(0.2),
+                      borderRadius: Styles.defaultBorderRadius,
+                      child: Hero(tag: ann.id, child: AnnouncementCard(announcement: ann)),
+                    );
+                  },
+                  childCount: list.length,
+                ),
               );
             },
           ),
@@ -166,11 +160,11 @@ class AnnouncementListScreen extends StatelessWidget {
       floatingActionButton: isPassenger
           ? null
           : FloatingActionButton(
-              onPressed: () => Navigator.pushNamed(context, '/driver_create'),
-              backgroundColor: Styles.defaultBlueColor,
-              tooltip: 'Ajouter un trajet',
-              child: const Icon(Icons.add, color: Colors.white),
-            ),
+        onPressed: () => Navigator.pushNamed(context, '/driver_create'),
+        backgroundColor: Styles.defaultBlueColor,
+        child: const Icon(Icons.add, color: Colors.white),
+        tooltip: 'Ajouter un trajet',
+      ),
     );
   }
 }

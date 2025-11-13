@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:covoiturage_app/screens/my_rides_screen.dart';
 import 'package:covoiturage_app/services/storage_service.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +22,7 @@ class DriverCreateScreen extends StatefulWidget {
 class _DriverCreateScreenState extends State<DriverCreateScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+
   String origin = '';
   String destination = '';
   DateTime? departure;
@@ -48,20 +51,21 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
   @override
   void initState() {
     super.initState();
+
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _buttonScaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
-    );
+    _buttonScaleAnimation =
+        Tween<double>(begin: 1.0, end: 0.95).animate(CurvedAnimation(
+          parent: _animationController,
+          curve: Curves.easeInOut,
+        ));
 
     // Auto-fill user info
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authController = Provider.of<AuthController>(
-        context,
-        listen: false,
-      );
+      final authController =
+      Provider.of<AuthController>(context, listen: false);
       final user = authController.currentUser;
       if (user != null) {
         setState(() {
@@ -91,10 +95,12 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
   }
 
   void _nextStep() {
-    if (_formKey.currentState!.validate() && _currentStep < 2) {
-      setState(() => _currentStep++);
-    } else {
-      _triggerButtonAnimation();
+    if (_currentStep < 2) {
+      if (_formKey.currentState!.validate()) {
+        setState(() => _currentStep++);
+      } else {
+        _animationController.forward().then((_) => _animationController.reverse());
+      }
     }
   }
 
@@ -102,13 +108,9 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
     if (_currentStep > 0) setState(() => _currentStep--);
   }
 
-  void _triggerButtonAnimation() {
-    _animationController.forward().then((_) => _animationController.reverse());
-  }
-
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) {
-      _triggerButtonAnimation();
+      _animationController.forward().then((_) => _animationController.reverse());
       return;
     }
 
@@ -127,10 +129,8 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
       driverPhone: driverPhone,
     );
 
-    Provider.of<AnnouncementController>(
-      context,
-      listen: false,
-    ).addAnnouncement(ann);
+    Provider.of<AnnouncementController>(context, listen: false)
+        .addAnnouncement(ann);
 
     await StorageService.setString('myPhone', driverPhone);
 
@@ -151,7 +151,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const MyRidesScreen()),
-      (route) => false,
+          (route) => false,
     );
   }
 
@@ -239,9 +239,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           onPressed: () async {
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => MapScreen(selectionMode: 'origin'),
-              ),
+              MaterialPageRoute(builder: (_) => MapScreen(selectionMode: 'origin')),
             );
             if (result != null && result is Map<String, dynamic>) {
               setState(() {
@@ -252,12 +250,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           },
         ),
         const SizedBox(height: 24),
-        _buildMapPreview(
-          destination,
-          destinationLatLng,
-          'Destination',
-          Colors.green,
-        ),
+        _buildMapPreview(destination, destinationLatLng, 'Destination', Colors.green),
         _buildTextField(
           label: 'Destination',
           hint: 'Entrez la ville d\'arrivée',
@@ -272,9 +265,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           onPressed: () async {
             final result = await Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => MapScreen(selectionMode: 'destination'),
-              ),
+              MaterialPageRoute(builder: (_) => MapScreen(selectionMode: 'destination')),
             );
             if (result != null && result is Map<String, dynamic>) {
               setState(() {
@@ -301,8 +292,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           readOnly: true,
           onTap: _pickDateTime,
           icon: Icons.calendar_today,
-          validator: (val) =>
-              departure != null ? null : 'Sélectionnez une date',
+          validator: (val) => departure != null ? null : 'Sélectionnez une date',
         ),
         const SizedBox(height: 24),
         _buildTextField(
@@ -322,11 +312,9 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           hint: 'Prix par siège',
           controller: _priceController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          onChanged: (val) =>
-              setState(() => price = double.tryParse(val) ?? 0.0),
+          onChanged: (val) => setState(() => price = double.tryParse(val) ?? 0.0),
           icon: Icons.attach_money,
-          validator: (val) =>
-              (double.tryParse(val!) != null && double.parse(val) > 0)
+          validator: (val) => (double.tryParse(val!) != null && double.parse(val) > 0)
               ? null
               : 'Entrez un prix valide',
         ),
@@ -339,50 +327,12 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Informations du chauffeur'),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).brightness == Brightness.dark
-                ? Styles.darkDefaultYellowColor.withOpacity(0.1)
-                : Styles.defaultYellowColor.withOpacity(0.1),
-            borderRadius: Styles.defaultBorderRadius,
-            border: Border.all(
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Styles.darkDefaultYellowColor.withOpacity(0.3)
-                  : Styles.defaultYellowColor.withOpacity(0.3),
-            ),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.info_outline,
-                size: 20,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Styles.darkDefaultYellowColor
-                    : Styles.defaultYellowColor,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Ces informations proviennent de votre compte et ne peuvent pas être modifiées',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Styles.darkDefaultGreyColor
-                        : Styles.defaultGreyColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SizedBox(height: 16),
         _buildTextField(
           label: 'Nom chauffeur',
           hint: 'Votre nom',
           controller: _driverNameController,
-          readOnly: true,
+          readOnly: false,
           icon: Icons.person,
           validator: (val) => val!.isEmpty ? 'Entrez votre nom' : null,
         ),
@@ -391,10 +341,10 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           label: 'Email',
           hint: 'Votre email',
           controller: _driverEmailController,
-          readOnly: true,
+          readOnly: false,
           keyboardType: TextInputType.emailAddress,
           validator: (val) =>
-              val!.isEmpty || !val.contains('@') ? 'Email invalide' : null,
+          val!.isEmpty || !val.contains('@') ? 'Email invalide' : null,
           icon: Icons.email,
         ),
         const SizedBox(height: 16),
@@ -402,9 +352,10 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           label: 'Téléphone',
           hint: 'Numéro de téléphone',
           controller: _driverPhoneController,
-          readOnly: true,
+          readOnly: false,
           keyboardType: TextInputType.phone,
-          validator: (val) => (val?.length == 8 && int.tryParse(val!) != null)
+          validator: (val) =>
+          (val?.length == 8 && int.tryParse(val!) != null)
               ? null
               : 'Numéro invalide (8 chiffres)',
           icon: Icons.phone,
@@ -416,14 +367,13 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           controller: _carModelController,
           onChanged: (val) => setState(() => carModel = val),
           icon: Icons.directions_car,
-          validator: (val) =>
-              val!.isEmpty ? 'Entrez un modèle de voiture' : null,
+          validator: (val) => val!.isEmpty ? 'Entrez un modèle de voiture' : null,
         ),
       ],
     );
   }
 
-  void _pickDateTime() async {
+  Future<void> _pickDateTime() async {
     DateTime? picked = await showDatePicker(
       context: context,
       initialDate: DateTime.now(),
@@ -462,9 +412,8 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
             time.hour,
             time.minute,
           );
-          _dateController.text = DateFormat(
-            'dd/MM/yyyy HH:mm',
-          ).format(departure!);
+          _dateController.text =
+              DateFormat('dd/MM/yyyy HH:mm').format(departure!);
         });
       }
     }
@@ -530,11 +479,11 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
           hintText: hint,
           prefixIcon: icon != null
               ? Icon(
-                  icon,
-                  color: Theme.of(context).brightness == Brightness.dark
-                      ? Styles.darkDefaultYellowColor
-                      : Styles.defaultYellowColor,
-                )
+            icon,
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Styles.darkDefaultYellowColor
+                : Styles.defaultYellowColor,
+          )
               : null,
           border: InputBorder.none,
           contentPadding: EdgeInsets.all(Styles.defaultPadding),
@@ -554,10 +503,10 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
   }
 
   Widget _buildMapButton(
-    BuildContext context, {
-    required String label,
-    required VoidCallback onPressed,
-  }) {
+      BuildContext context, {
+        required String label,
+        required VoidCallback onPressed,
+      }) {
     return GestureDetector(
       onTapDown: (_) => _animationController.forward(),
       onTapUp: (_) {
@@ -607,48 +556,43 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
     );
   }
 
-  Widget _buildMapPreview(
-    String location,
-    LatLng? latLng,
-    String label,
-    Color markerColor,
-  ) {
+  Widget _buildMapPreview(String location, LatLng? latLng, String label, Color markerColor) {
     return location.isNotEmpty && latLng != null
         ? Container(
-            height: 120,
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              borderRadius: Styles.defaultBorderRadius,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: Styles.defaultBorderRadius,
-              child: GoogleMap(
-                initialCameraPosition: CameraPosition(target: latLng, zoom: 12),
-                markers: {
-                  Marker(
-                    markerId: MarkerId(label),
-                    position: latLng,
-                    icon: BitmapDescriptor.defaultMarkerWithHue(
-                      markerColor == Colors.red
-                          ? BitmapDescriptor.hueRed
-                          : BitmapDescriptor.hueGreen,
-                    ),
-                    infoWindow: InfoWindow(title: location),
-                  ),
-                },
-                liteModeEnabled: true,
-                zoomControlsEnabled: false,
-                myLocationButtonEnabled: false,
+      height: 120,
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        borderRadius: Styles.defaultBorderRadius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: Styles.defaultBorderRadius,
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(target: latLng, zoom: 12),
+          markers: {
+            Marker(
+              markerId: MarkerId(label),
+              position: latLng,
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                markerColor == Colors.red
+                    ? BitmapDescriptor.hueRed
+                    : BitmapDescriptor.hueGreen,
               ),
+              infoWindow: InfoWindow(title: location),
             ),
-          )
+          },
+          liteModeEnabled: true,
+          zoomControlsEnabled: false,
+          myLocationButtonEnabled: false,
+        ),
+      ),
+    )
         : const SizedBox();
   }
 
@@ -669,9 +613,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
                       ? Styles.darkDefaultBlueColor
                       : Styles.defaultBlueColor,
                 ),
-                padding: EdgeInsets.symmetric(
-                  vertical: Styles.defaultPadding / 1.2,
-                ),
+                padding: EdgeInsets.symmetric(vertical: Styles.defaultPadding / 1.2),
               ),
               child: Text(
                 'Précédent',
@@ -690,9 +632,7 @@ class _DriverCreateScreenState extends State<DriverCreateScreen>
               onPressed: _currentStep < 2 ? _nextStep : _submitForm,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Styles.defaultBlueColor,
-                padding: EdgeInsets.symmetric(
-                  vertical: Styles.defaultPadding / 1.2,
-                ),
+                padding: EdgeInsets.symmetric(vertical: Styles.defaultPadding / 1.2),
               ),
               child: Text(
                 _currentStep < 2 ? 'Suivant' : 'Terminer',

@@ -1,9 +1,11 @@
+// ignore_for_file: use_super_parameters
+
+import 'package:covoiturage_app/screens/choice_screen.dart';
 import 'package:flutter/material.dart';
 import 'onboarding_page.dart';
-import '../screens/login_screen.dart';
 
 class OnboardingWrapper extends StatefulWidget {
-  const OnboardingWrapper({super.key});
+  const OnboardingWrapper({Key? key}) : super(key: key);
 
   @override
   State<OnboardingWrapper> createState() => _OnboardingWrapperState();
@@ -21,9 +23,10 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
 
   void _next() {
     if (_current == 1) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const LoginScreen()));
+      // Navigate to HomeShell after onboarding
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeShell()),
+      );
     } else {
       _controller.nextPage(
         duration: const Duration(milliseconds: 300),
@@ -65,7 +68,7 @@ class _OnboardingWrapperState extends State<OnboardingWrapper> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   2,
-                  (i) => AnimatedContainer(
+                      (i) => AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.symmetric(horizontal: 4),
                     height: 8,

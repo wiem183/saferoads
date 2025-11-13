@@ -45,7 +45,9 @@ class HistoryScreen extends StatelessWidget {
               final r = controller.reservations[i];
               return Card(
                 elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
+                shape: RoundedRectangleBorder(
+                  borderRadius: Styles.defaultBorderRadius,
+                ),
                 child: ListTile(
                   leading: Icon(
                     Icons.history,

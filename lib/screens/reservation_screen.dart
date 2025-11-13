@@ -1,8 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+// ignore_for_file: library_private_types_in_public_api, use_build_context_synchronously, deprecated_member_use
+
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server/gmail.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
 import '../models/reservation.dart';
-import '../controllers/announcement_controller.dart';
 import '../controllers/reservation_controller.dart';
 import '../services/payment_service.dart';
 import '../styles/styles.dart';
@@ -10,8 +18,17 @@ import 'history_screen.dart';
 
 class ReservationScreen extends StatefulWidget {
   final String announcementId;
+  final String parkingId;
+  final String parkingName;
+  final double pricePerHour;
 
-  const ReservationScreen({super.key, required this.announcementId});
+  const ReservationScreen({
+    super.key,
+    required this.announcementId,
+    required this.parkingId,
+    required this.parkingName,
+    required this.pricePerHour,
+  });
 
   @override
   _ReservationScreenState createState() => _ReservationScreenState();
@@ -20,14 +37,16 @@ class ReservationScreen extends StatefulWidget {
 class _ReservationScreenState extends State<ReservationScreen>
     with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
+
   String name = '';
   String phone = '';
-  String email = ''; // ← CHAMP EMAIL AJOUTÉ
+  String email = ''; // pour l'envoi email
   int seats = 1;
   String payment = 'cash';
   String cardNumber = '';
   String expiryDate = '';
   String cvv = '';
+
   late AnimationController _animationController;
   late Animation<double> _buttonScaleAnimation;
 
@@ -49,100 +68,127 @@ class _ReservationScreenState extends State<ReservationScreen>
     super.dispose();
   }
 
+  /// Envoi d’un e-mail de confirmation avec QR code
+  Future<void> _sendEmail(String to, String subject, String message) async {
+    try {
+      final smtpServer = gmail(
+        'nermine.ghouibii@gmail.com',
+        'rbfs hocz wofw imkz', // mot de passe d’application Gmail
+      );
+
+      final qrData =
+          'Parking: ${widget.parkingName}\nPrix: ${widget.pricePerHour} dt/h\nNom: $name\nTéléphone: $phone\nDate: ${DateTime.now()}';
+      final qrBytes = await _buildQrPngBytes(qrData);
+      final qrBase64 = base64Encode(qrBytes);
+      final qrImgTag =
+          '<img alt="QR de votre réservation" src="data:image/png;base64,$qrBase64" style="width:220px;height:220px;display:block;margin:12px 0;border:1px solid #eee;border-radius:8px" />';
+
+      final htmlBody = '''
+      <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.5;color:#222">
+        <h2 style="margin:0 0 8px">Confirmation de réservation SafeRoad 🚗</h2>
+        <p>${message.replaceAll('\n', '<br/>')}</p>
+        <p><strong>Parking :</strong> ${widget.parkingName}<br/>
+           <strong>Tarif :</strong> ${widget.pricePerHour.toStringAsFixed(2)} dt/h<br/>
+           <strong>Nom :</strong> $name<br/>
+           <strong>Téléphone :</strong> $phone<br/>
+           <strong>Date :</strong> ${DateTime.now().toString().substring(0,16)}
+        </p>
+        <p>Présentez ce QR code à l'entrée :</p>
+        $qrImgTag
+        <p style="font-size:12px;color:#666">Si l'image ne s'affiche pas, activez “Afficher les images” dans votre client mail.</p>
+      </div>
+    ''';
+
+      final email = Message()
+        ..from = Address('nermine.ghouibii@gmail.com', 'SafeRoad App')
+        ..recipients.add(to)
+        ..subject = subject
+        ..text = message
+        ..html = htmlBody;
+
+      await send(email, smtpServer);
+    } catch (e) {
+      print('Erreur envoi email: $e');
+    }
+  }
+
+  Future<Uint8List> _buildQrPngBytes(String data) async {
+    final painter = QrPainter(data: data, version: QrVersions.auto, gapless: true);
+    final uiImage = await painter.toImage(512);
+    final byteData = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
   Future<void> _submitReservation() async {
     if (_formKey.currentState!.validate()) {
       Reservation res = Reservation(
         reserverName: name,
         reserverPhone: phone,
-        reserverEmail: email, // ← EMAIL UTILISÉ ICI
+        reserverEmail: email,
         seatsReserved: seats,
         paymentMethod: payment,
       );
-      bool success = await Provider.of<ReservationController>(
-        context,
-        listen: false,
-      ).reserveSeats(widget.announcementId, res);
+
+      bool success =
+      await Provider.of<ReservationController>(context, listen: false)
+          .reserveSeatsOrParking(
+        announcementId: widget.announcementId,
+        parkingId: widget.parkingId,
+        res: res,
+      );
+
       if (success) {
         if (payment == 'credit') {
-          bool paymentSuccess = await PaymentService.processCreditCardPayment(
-            cardNumber,
-            expiryDate,
-            cvv,
-          );
+          bool paymentSuccess =
+          await PaymentService.processCreditCardPayment(cardNumber, expiryDate, cvv);
           if (paymentSuccess) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Paiement réussi !')));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('✅ Paiement réussi !')));
           } else {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Erreur de paiement')));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('❌ Erreur de paiement')));
             return;
           }
         } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'OK, merci. Vous payez en espèces lors de la rencontre.',
-              ),
-            ),
-          );
+          ScaffoldMessenger.of(context)
+              .showSnackBar(const SnackBar(content: Text('💵 Paiement en espèces sur place confirmé.')));
         }
-        Navigator.pop(context);
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const HistoryScreen()),
+
+        await _sendEmail(
+          "nermine.ghouibii@gmail.com",
+          "Confirmation de réservation SafeRoad 🚗",
+          "Votre réservation pour ${widget.parkingName} est confirmée.\n"
+              "Prix : ${widget.pricePerHour} dt/heure\nMerci d’avoir choisi SafeRoad 💚",
         );
+
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
       } else {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Erreur de réservation')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('Erreur de réservation ❌')));
       }
     } else {
-      _animationController.forward().then(
-        (_) => _animationController.reverse(),
-      );
+      _animationController.forward().then((_) => _animationController.reverse());
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Réserver une place - ${widget.parkingName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.green,
       ),
-      child: Padding(
+      body: Padding(
         padding: EdgeInsets.all(Styles.defaultPadding),
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 16),
-                    decoration: BoxDecoration(
-                      color: Styles.defaultGreyColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                Text(
-                  'Réserver un siège',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Styles.darkDefaultLightWhiteColor
-                        : Styles.defaultRedColor,
-                  ),
-                ),
-                const SizedBox(height: 16),
+                Text('Tarif : ${widget.pricePerHour.toStringAsFixed(2)} dt/heure',
+                    style: const TextStyle(fontSize: 16, color: Colors.grey)),
+                const SizedBox(height: 24),
                 _buildTextField(
                   label: 'Votre nom',
                   hint: 'Entrez votre nom',
@@ -158,50 +204,40 @@ class _ReservationScreenState extends State<ReservationScreen>
                   onChanged: (val) => phone = val,
                   icon: Icons.phone,
                   validator: (val) =>
-                      (val!.length == 8 && int.tryParse(val) != null)
-                      ? null
-                      : 'Numéro invalide (8 chiffres)',
+                  (val!.length == 8 && int.tryParse(val) != null) ? null : 'Numéro invalide (8 chiffres)',
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
-                  label: 'Email', // ← CHAMP EMAIL AJOUTÉ
+                  label: 'Email',
                   hint: 'Entrez votre email',
                   keyboardType: TextInputType.emailAddress,
                   onChanged: (val) => email = val,
                   icon: Icons.email,
-                  validator: (val) => (val!.isNotEmpty && val.contains('@'))
-                      ? null
-                      : 'Email invalide',
+                  validator: (val) => (val!.isNotEmpty && val.contains('@')) ? null : 'Email invalide',
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(
-                  label: 'Sièges à réserver',
-                  hint: 'Nombre de sièges',
+                  label: 'Durée (en heures)',
+                  hint: 'Ex: 2',
                   keyboardType: TextInputType.number,
                   onChanged: (val) => seats = int.tryParse(val) ?? 1,
-                  icon: Icons.event_seat,
+                  icon: Icons.timer,
                   validator: (val) =>
-                      (int.tryParse(val!) != null && int.parse(val) > 0)
-                      ? null
-                      : 'Entrez un nombre valide',
+                  (int.tryParse(val!) != null && int.parse(val) > 0) ? null : 'Entrez un nombre valide',
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  initialValue: payment,
+                  value: payment,
                   decoration: InputDecoration(
                     labelText: 'Méthode de paiement',
-                    border: OutlineInputBorder(
-                      borderRadius: Styles.defaultBorderRadius,
-                    ),
+                    border: OutlineInputBorder(borderRadius: Styles.defaultBorderRadius),
                     contentPadding: EdgeInsets.all(Styles.defaultPadding),
                   ),
                   items: ['cash', 'credit']
-                      .map(
-                        (p) => DropdownMenuItem(
-                          value: p,
-                          child: Text(p == 'cash' ? 'Espèces' : 'Carte crédit'),
-                        ),
-                      )
+                      .map((p) => DropdownMenuItem(
+                    value: p,
+                    child: Text(p == 'cash' ? 'Espèces' : 'Carte de crédit'),
+                  ))
                       .toList(),
                   onChanged: (val) => setState(() => payment = val!),
                 ),
@@ -213,8 +249,7 @@ class _ReservationScreenState extends State<ReservationScreen>
                     keyboardType: TextInputType.number,
                     onChanged: (val) => cardNumber = val,
                     icon: Icons.credit_card,
-                    validator: (val) =>
-                        val!.length >= 16 ? null : 'Numéro de carte invalide',
+                    validator: (val) => val!.length >= 16 ? null : 'Numéro de carte invalide',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -223,9 +258,7 @@ class _ReservationScreenState extends State<ReservationScreen>
                     keyboardType: TextInputType.datetime,
                     onChanged: (val) => expiryDate = val,
                     icon: Icons.calendar_month,
-                    validator: (val) => val!.contains('/') && val.length == 5
-                        ? null
-                        : 'Format invalide (MM/YY)',
+                    validator: (val) => val!.contains('/') && val.length == 5 ? null : 'Format invalide (MM/YY)',
                   ),
                   const SizedBox(height: 16),
                   _buildTextField(
@@ -234,8 +267,7 @@ class _ReservationScreenState extends State<ReservationScreen>
                     keyboardType: TextInputType.number,
                     onChanged: (val) => cvv = val,
                     icon: Icons.lock,
-                    validator: (val) =>
-                        val!.length == 3 ? null : 'CVV invalide (3 chiffres)',
+                    validator: (val) => val!.length == 3 ? null : 'CVV invalide (3 chiffres)',
                   ),
                 ],
                 const SizedBox(height: 24),
@@ -257,10 +289,7 @@ class _ReservationScreenState extends State<ReservationScreen>
                         ),
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
-                            colors: [
-                              Styles.defaultBlueColor,
-                              Styles.defaultYellowColor,
-                            ],
+                            colors: [Styles.defaultBlueColor, Styles.defaultYellowColor],
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                           ),
@@ -273,14 +302,10 @@ class _ReservationScreenState extends State<ReservationScreen>
                             ),
                           ],
                         ),
-                        child: Text(
+                        child: const Text(
                           'Confirmer',
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                         ),
                       ),
                     ),
@@ -309,9 +334,7 @@ class _ReservationScreenState extends State<ReservationScreen>
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: icon != null
-            ? Icon(icon, color: Styles.defaultYellowColor)
-            : null,
+        prefixIcon: icon != null ? Icon(icon, color: Styles.defaultYellowColor) : null,
         border: OutlineInputBorder(borderRadius: Styles.defaultBorderRadius),
         contentPadding: EdgeInsets.all(Styles.defaultPadding),
         filled: true,

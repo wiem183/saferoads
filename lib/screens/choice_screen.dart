@@ -1,28 +1,55 @@
+// ignore_for_file: use_super_parameters, unused_field
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+
+// Screens from main branch
 import 'driver_create_screen.dart';
 import 'profile_screen.dart';
+import 'signalements_map_screen.dart';
+
+// Screens from Amendes branch
+import 'history_screen.dart';
+import 'search_screen.dart';
+import 'my_rides_screen.dart';
+import 'parking_list_screen.dart';
+import 'amende_screens_example.dart';
+
 import '../widgets/app_drawer.dart';
 import '../styles/styles.dart';
-import '../screens/signalements_map_screen.dart'; // add this at the top
-
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  const HomeShell({Key? key}) : super(key: key);
 
   @override
   State<HomeShell> createState() => _HomeShellState();
 }
 
 class _HomeShellState extends State<HomeShell> {
-  int _current = 0; // Commence avec DriverCreateScreen
+  int _current = 0;
 
-  final _pages =  [
-    DriverCreateScreen(),
-    ProfileScreen(),
-    SignalementsMapScreen() // <-- new page
+  // Combined pages from both branches
+  final _pages = [
+    HistoryScreen(),                     // Amendes
+    SearchScreen(),                      // Amendes
+    DriverCreateScreen(),                // Main
+    MyRidesScreen(),                     // Amendes
+    ParkingListScreen(),                 // Amendes
+    UserAmendesScreen(userId: 'current-user'), // Amendes
+    ProfileScreen(),                      // Main
+    SignalementsMapScreen(),             // Main
   ];
-  final _pageTitles = const ['Publier un trajet', 'Mon Profil','Signalements'];
+
+  final _pageTitles = const [
+    'Historique',
+    'Rechercher',
+    'Publier un trajet',
+    'Mes trajets',
+    'Parkings',
+    'Amendes',
+    'Mon Profil',
+    'Signalements'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +62,7 @@ class _HomeShellState extends State<HomeShell> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: isDark
-                ? Styles.darkDefaultLightWhiteColor
-                : Styles.defaultRedColor,
+            color: isDark ? Styles.darkDefaultLightWhiteColor : Styles.defaultRedColor,
           ),
         ),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -61,8 +86,28 @@ class _HomeShellState extends State<HomeShell> {
         onTap: (i) => setState(() => _current = i),
         items: const [
           BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.clock),
+            label: 'Historique',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.search),
+            label: 'Rechercher',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.plus_app),
             label: 'Publier',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(CupertinoIcons.person),
+            label: 'Mes trajets',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.local_parking),
+            label: 'Parkings',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.traffic),
+            label: 'Amendes',
           ),
           BottomNavigationBarItem(
             icon: Icon(CupertinoIcons.person),
@@ -70,7 +115,7 @@ class _HomeShellState extends State<HomeShell> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.map),
-            label: 'Signalements', // new tab
+            label: 'Signalements',
           ),
         ],
       ),

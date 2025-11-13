@@ -1,9 +1,11 @@
+// ignore_for_file: use_build_context_synchronously, use_super_parameters
+
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'announcement_list_screen.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({super.key});
+  const SearchScreen({Key? key}) : super(key: key);
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -23,10 +25,12 @@ class _SearchScreenState extends State<SearchScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (date == null) return;
+
     final time = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_departureDateTime),
     );
+
     setState(() {
       _departureDateTime = time == null
           ? date
@@ -50,18 +54,15 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 24),
             _inputField('Origine', _originCtrl, CupertinoIcons.location),
             const SizedBox(height: 16),
-            _inputField(
-              'Destination',
-              _destinationCtrl,
-              CupertinoIcons.location_fill,
-            ),
+            _inputField('Destination', _destinationCtrl, CupertinoIcons.location_fill),
             const SizedBox(height: 16),
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: const Icon(CupertinoIcons.calendar),
               title: const Text('Quand?'),
               subtitle: Text(
-                '${_departureDateTime.day}/${_departureDateTime.month}/${_departureDateTime.year}  ${_departureDateTime.hour}:${_departureDateTime.minute.toString().padLeft(2, '0')}',
+                '${_departureDateTime.day}/${_departureDateTime.month}/${_departureDateTime.year}  '
+                    '${_departureDateTime.hour}:${_departureDateTime.minute.toString().padLeft(2, '0')}',
               ),
               onTap: _pickDateTime,
             ),
@@ -75,12 +76,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 DropdownButton<int>(
                   value: _seats,
                   items: List.generate(8, (i) => i + 1)
-                      .map(
-                        (e) => DropdownMenuItem(
-                          value: e,
-                          child: Text(e.toString()),
-                        ),
-                      )
+                      .map((e) => DropdownMenuItem(value: e, child: Text(e.toString())))
                       .toList(),
                   onChanged: (v) => setState(() => _seats = v!),
                 ),
@@ -98,6 +94,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     departureDateTime: _departureDateTime,
                     seats: _seats,
                   ),
+
                 ),
               ),
               child: const Padding(

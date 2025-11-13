@@ -5,7 +5,7 @@ import '../controllers/announcement_controller.dart';
 import '../styles/styles.dart';
 
 class MapScreen extends StatefulWidget {
-  final String? selectionMode; 
+  final String? selectionMode;
 
   const MapScreen({super.key, this.selectionMode});
 
@@ -37,7 +37,6 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   String _getPlaceNameFromLatLng(LatLng position) {
-
     if (position.latitude >= 36.7 && position.latitude <= 36.9 && position.longitude >= 10.1 && position.longitude <= 10.3) {
       return 'Tunis';
     } else if (position.latitude >= 35.7 && position.latitude <= 35.9 && position.longitude >= 10.5 && position.longitude <= 10.7) {
@@ -55,7 +54,7 @@ class _MapScreenState extends State<MapScreen> {
 
     final announcementMarkers = ctrl.announcements.asMap().entries.map((e) {
       final a = e.value;
-      final latLng = a.originLatLng ?? LatLng(34.0 + (e.key * 0.2), 9.0 + (e.key * 0.4)); // Fallback for demo
+      final latLng = a.originLatLng ?? LatLng(34.0 + (e.key * 0.2), 9.0 + (e.key * 0.4));
       return Marker(
         markerId: MarkerId(a.id),
         position: latLng,
@@ -99,15 +98,15 @@ class _MapScreenState extends State<MapScreen> {
 
     final selectionMarker = _selectedPosition != null
         ? {
-            Marker(
-              markerId: const MarkerId('selection'),
-              position: _selectedPosition!,
-              icon: BitmapDescriptor.defaultMarkerWithHue(
-                widget.selectionMode == 'origin' ? BitmapDescriptor.hueRed : BitmapDescriptor.hueGreen,
-              ),
-              infoWindow: InfoWindow(title: _selectedPlace ?? 'Lieu sélectionné'),
-            ),
-          }
+      Marker(
+        markerId: const MarkerId('selection'),
+        position: _selectedPosition!,
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          widget.selectionMode == 'origin' ? BitmapDescriptor.hueRed : BitmapDescriptor.hueGreen,
+        ),
+        infoWindow: InfoWindow(title: _selectedPlace ?? 'Lieu sélectionné'),
+      ),
+    }
         : <Marker>{};
 
     return Scaffold(
@@ -125,29 +124,26 @@ class _MapScreenState extends State<MapScreen> {
       ),
       body: GoogleMap(
         initialCameraPosition: _tunisia,
-        onMapCreated: (controller) {
-          _mapController = controller;
-          _mapController!.setMapStyle(null); 
-        },
+        onMapCreated: (controller) => _mapController = controller,
         markers: isSelectionMode ? selectionMarker : announcementMarkers,
         onTap: isSelectionMode
             ? (LatLng position) {
-                if (_tunisiaBounds.contains(position)) {
-                  setState(() {
-                    _selectedPosition = position;
-                    _selectedPlace = _getPlaceNameFromLatLng(position);
-                    _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 12));
-                  });
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Veuillez sélectionner un lieu en Tunisie'),
-                      backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
-                    ),
-                  );
-                }
-              }
+          if (_tunisiaBounds.contains(position)) {
+            setState(() {
+              _selectedPosition = position;
+              _selectedPlace = _getPlaceNameFromLatLng(position);
+              _mapController?.animateCamera(CameraUpdate.newLatLngZoom(position, 12));
+            });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text('Veuillez sélectionner un lieu en Tunisie'),
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(borderRadius: Styles.defaultBorderRadius),
+              ),
+            );
+          }
+        }
             : null,
         minMaxZoomPreference: const MinMaxZoomPreference(6, 15),
         cameraTargetBounds: CameraTargetBounds(_tunisiaBounds),
@@ -156,15 +152,15 @@ class _MapScreenState extends State<MapScreen> {
       ),
       floatingActionButton: isSelectionMode && _selectedPosition != null
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.pop(context, {
-                  'place': _selectedPlace,
-                  'latLng': _selectedPosition,
-                });
-              },
-              backgroundColor: Styles.defaultBlueColor,
-              child: const Icon(Icons.check, color: Colors.white),
-            )
+        onPressed: () {
+          Navigator.pop(context, {
+            'place': _selectedPlace,
+            'latLng': _selectedPosition,
+          });
+        },
+        backgroundColor: Styles.defaultBlueColor,
+        child: const Icon(Icons.check, color: Colors.white),
+      )
           : null,
     );
   }

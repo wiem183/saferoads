@@ -3,14 +3,14 @@ class Reservation {
   String reserverPhone;
   int seatsReserved;
   String paymentMethod;
-  String reserverEmail;
+  String? reserverEmail; // optional to handle both branches
 
   Reservation({
     required this.reserverName,
     required this.reserverPhone,
     required this.seatsReserved,
     required this.paymentMethod,
-    required this.reserverEmail,
+    this.reserverEmail,
   });
 
   factory Reservation.fromJson(Map<String, dynamic> json) {
@@ -19,7 +19,7 @@ class Reservation {
       reserverPhone: json['reserverPhone'] ?? '',
       seatsReserved: (json['seatsReserved'] ?? 1).toInt(),
       paymentMethod: json['paymentMethod'] ?? '',
-      reserverEmail: json['reserverEmail'] ?? '',
+      reserverEmail: json['reserverEmail'], // optional
     );
   }
 

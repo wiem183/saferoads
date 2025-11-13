@@ -1,20 +1,22 @@
+// ignore_for_file: use_super_parameters
+
 import 'package:flutter/material.dart';
 
 class OnboardingPage extends StatelessWidget {
-  final String? imagePath;       
+  final String? imagePath;
   final String title;
   final String body;
   final VoidCallback? onNext;
   final bool isLastPage;
 
   const OnboardingPage({
-    super.key,
+    Key? key,
     this.imagePath,
     required this.title,
     required this.body,
     this.onNext,
     this.isLastPage = false,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
