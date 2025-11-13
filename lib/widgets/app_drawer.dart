@@ -7,6 +7,8 @@ import '../screens/help_support_screen.dart';
 import '../screens/search_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/my_rides_screen.dart';
+import '../screens/blog_feed_screen.dart';
+import '../screens/bookmarks_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final Function(int)? onPageChanged;
@@ -164,6 +166,34 @@ class AppDrawer extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (_) => const MyRidesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.bookmark_outline,
+                    title: 'Mes favoris',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BookmarksScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context,
+                    icon: Icons.forum,
+                    title: 'Communauté',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const BlogFeedScreen(),
                         ),
                       );
                     },
