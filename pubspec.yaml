@@ -47,6 +47,7 @@ dependencies:
   flutter_staggered_animations: ^1.1.1
   firebase_core: ^3.6.0
   cloud_firestore: ^5.4.4
+  firebase_storage: ^12.4.10   
   telephony: ^0.2.0
   mailer: ^6.6.0
   qr_flutter: ^4.1.0
