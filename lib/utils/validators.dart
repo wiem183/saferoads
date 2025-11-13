@@ -10,6 +10,7 @@ class Validators {
 
   // Expression régulière pour nom (lettres, espaces, tirets, apostrophes)
   static final RegExp _nameRegex = RegExp(r"^[a-zA-ZÀ-ÿ\s\-']+$");
+  static final RegExp _tagRegex = RegExp(r'^[a-zA-Z0-9_\-À-ÿ]+$');
 
   /// Valide un email
   static String? validateEmail(String? value) {
@@ -220,6 +221,91 @@ class Validators {
       return '$fieldName ne peut pas dépasser $maxLength caractères';
     }
 
+    return null;
+  }
+
+  /// Valide un titre de publication pour la communauté
+  static String? validateBlogTitle(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Le titre est requis';
+    }
+
+    final trimmed = value.trim();
+    if (trimmed.length < 3) {
+      return 'Le titre doit contenir au moins 3 caractères';
+    }
+
+    if (trimmed.length > 120) {
+      return 'Le titre est trop long (max 120 caractères)';
+    }
+
+    return null;
+  }
+
+  /// Valide le contenu d'une publication ou d'un commentaire de blog
+  static String? validateBlogContent(String? value, {int minLength = 10}) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Le contenu est requis';
+    }
+
+    final trimmed = value.trim();
+
+    if (trimmed.length < minLength) {
+      return 'Développez votre message (au moins $minLength caractères)';
+    }
+
+    if (trimmed.length > 5000) {
+      return 'Le contenu est trop long (max 5000 caractères)';
+    }
+
+    return null;
+  }
+
+  /// Valide une liste de tags nettoyée
+  static String? validateTagList(
+    List<String> tags, {
+    int maxTags = 8,
+    int maxTagLength = 24,
+  }) {
+    if (tags.length > maxTags) {
+      return 'Maximum $maxTags tags autorisés';
+    }
+
+    for (final tag in tags) {
+      if (tag.length > maxTagLength) {
+        return 'Chaque tag doit faire moins de $maxTagLength caractères';
+      }
+      if (!_tagRegex.hasMatch(tag)) {
+        return 'Les tags ne peuvent contenir que des lettres, chiffres, tirets ou underscores';
+      }
+    }
+    return null;
+  }
+
+  /// Valide une chaîne de tags (séparés par des virgules)
+  static String? validateBlogTagsInput(
+    String? value, {
+    int maxTags = 8,
+    int maxTagLength = 24,
+  }) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+
+    final tags = value
+        .split(',')
+        .map((tag) => tag.trim().toLowerCase())
+        .where((tag) => tag.isNotEmpty)
+        .toList();
+
+    return validateTagList(tags, maxTags: maxTags, maxTagLength: maxTagLength);
+  }
+
+  /// Vérifie que le nombre de médias ne dépasse pas la limite autorisée
+  static String? validateMediaCount(int count, {int max = 6}) {
+    if (count > max) {
+      return 'Vous pouvez ajouter au maximum $max médias';
+    }
     return null;
   }
 }

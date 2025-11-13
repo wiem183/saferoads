@@ -8,9 +8,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'controllers/announcement_controller.dart';
 import 'controllers/reservation_controller.dart';
 import 'controllers/auth_controller.dart';
+import 'controllers/blog_controller.dart';
 import 'styles/styles.dart';
 import 'services/storage_service.dart';
 import 'screens/signalements_map_screen.dart';
+import 'screens/blog_feed_screen.dart';
+import 'screens/bookmarks_screen.dart';
 
 
 void main() async {
@@ -32,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthController()),
         ChangeNotifierProvider(create: (_) => AnnouncementController()),
         ChangeNotifierProvider(create: (_) => ReservationController()),
+        ChangeNotifierProvider(create: (_) => BlogController()),
       ],
       child: MaterialApp(
         title: 'Covoiturage App',
@@ -107,6 +111,8 @@ class MyApp extends StatelessWidget {
         home: OnboardingWrapper(),
         routes: {
           '/signalements': (context) => SignalementsMapScreen(),
+          '/blog': (context) => const BlogFeedScreen(),
+          '/bookmarks': (context) => const BookmarksScreen(),
         },
       ),
 
